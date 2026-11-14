@@ -444,6 +444,8 @@ pub struct PathGeometry {
     id: u64,
     path: kurbo::BezPath,
     bounds: kurbo::Rect,
+    /// How long the curves are, found the first time it is asked.
+    length: std::sync::OnceLock<f64>,
 }
 
 impl PathGeometry {
@@ -454,6 +456,7 @@ impl PathGeometry {
             id: NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             path,
             bounds,
+            length: std::sync::OnceLock::new(),
         })
     }
 
@@ -468,6 +471,13 @@ impl PathGeometry {
     /// The box around the curves.
     pub fn bounds(&self) -> kurbo::Rect {
         self.bounds
+    }
+
+    /// How long the curves are all together, in their coordinates.
+    pub fn length(&self) -> f64 {
+        *self
+            .length
+            .get_or_init(|| kurbo::Shape::perimeter(&self.path, 1e-3))
     }
 }
 

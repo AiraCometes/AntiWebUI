@@ -673,3 +673,20 @@ fn labels_can_be_bolder() {
         "the first is bold"
     );
 }
+
+#[test]
+fn dashes_are_measured_in_the_length_a_shape_is_said_to_have() {
+    let mut ui = mount((800, 600), ONE, || {
+        svg().w(400.0).h(400.0).child(
+            svg::line(0.0, 10.0, 200.0, 10.0)
+                .path_length(1.0)
+                .stroke(Color::BLACK)
+                .stroke_width(2.0)
+                .dash_array([0.25, 1.0])
+                .dash_offset(-0.5),
+        )
+    });
+    let stroke = paths(&mut ui).into_iter().find_map(|d| d.stroke).unwrap();
+    assert_eq!(stroke.dashes.as_deref(), Some(&[50.0, 200.0][..]));
+    assert_eq!(stroke.dash_offset, -100.0);
+}

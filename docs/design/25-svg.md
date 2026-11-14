@@ -39,6 +39,7 @@ svg::measure_text("label", &Style::default().text_size(14.0))
 | `fill-opacity` / `stroke-opacity` / `stroke-width` | 同じ名前 |
 | `fill-rule` / `stroke-linecap` / `stroke-linejoin` / `stroke-miterlimit` | `.fill_rule()` / `.line_cap()` / `.line_join()` / `.miter_limit()` |
 | `stroke-dasharray` / `stroke-dashoffset` | `.dash_array()` / `.dash_offset()` |
+| `pathLength` | `svg::path(…).path_length()`（破線をこの長さで測る。形の実際の長さは初めて要るときに求めて保持する） |
 | `vector-effect: non-scaling-stroke` | `.non_scaling_stroke()` |
 | `transform` 属性 | `.transform()`、`.dyn_transform()` |
 | `preserveAspectRatio` | `.aspect(SvgAspect)` |

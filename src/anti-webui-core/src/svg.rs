@@ -102,6 +102,8 @@ pub struct ShapeData {
     pub clip: Option<ClipQuad>,
     /// What it is cut to by the groups around it, in the coordinates of the box of the `svg`.
     pub clips: Option<Arc<[ClipQuad]>>,
+    /// How long the author says the shape is, as `pathLength` in SVG: dashes are measured in it.
+    pub path_length: Option<f32>,
 }
 
 impl Default for ShapeData {
@@ -112,6 +114,7 @@ impl Default for ShapeData {
             world: Affine::IDENTITY,
             clip: None,
             clips: None,
+            path_length: None,
         }
     }
 }
@@ -288,13 +291,21 @@ pub(crate) fn shape_draws(
         } else {
             c.stroke_width as f64
         };
+        // Dashes in the length the author gave are in proportion to the real one.
+        let per = match data.path_length {
+            Some(l) if l > 0.0 && c.dash_array.is_some() => (geometry.length() / l as f64) as f32,
+            _ => 1.0,
+        };
         let stroke = StrokeStyle {
             width: width as f32,
             cap: c.line_cap,
             join: c.line_join,
             miter_limit: c.miter_limit,
-            dashes: c.dash_array.clone(),
-            dash_offset: c.dash_offset,
+            dashes: match &c.dash_array {
+                Some(d) if per != 1.0 => Some(d.iter().map(|d| d * per).collect()),
+                d => d.clone(),
+            },
+            dash_offset: c.dash_offset * per,
         };
         out(draw(
             paint,
@@ -462,6 +473,7 @@ pub struct Shape {
     source: PathSource,
     transform: Affine,
     dyn_transform: Option<Box<dyn Fn() -> Affine>>,
+    path_length: Option<f32>,
 }
 
 /// A group of shapes, like `<g>`: what is set on it goes down to them.
@@ -490,6 +502,7 @@ pub fn path(source: impl IntoPathSource) -> Shape {
         source: source.into_path_source(),
         transform: Affine::IDENTITY,
         dyn_transform: None,
+        path_length: None,
     }
 }
 
@@ -565,6 +578,13 @@ impl Shape {
         self.dyn_transform = Some(Box::new(f));
         self
     }
+
+    /// How long to take it to be when measuring dashes along it, like `pathLength` in SVG: with
+    /// 1, `dash_array([0.25, 1.0])` is a quarter of it, however long it is.
+    pub fn path_length(mut self, length: f32) -> Self {
+        self.path_length = Some(length);
+        self
+    }
 }
 
 impl Group {
@@ -636,6 +656,7 @@ impl IntoView for Shape {
         let data = ShapeData {
             geometry: Some(geometry),
             transform: self.transform,
+            path_length: self.path_length,
             ..ShapeData::default()
         };
         let id = self
