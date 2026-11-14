@@ -178,6 +178,7 @@ pub(crate) fn paint(
                     normalized_coords: Vec::new(),
                     embolden: false,
                     skew: None,
+                    stroke: 0.0,
                     color,
                     glyphs: glyphs
                         .iter()

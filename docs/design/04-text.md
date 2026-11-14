@@ -38,6 +38,36 @@ fontique 0.12.0 の時点の動作で、fontique 側で直ればこの処理は�
 - fontique の DirectWrite のフォールバックは、文字種ごとに **1 つのファミリ**しか返さない（文字種の見本の文字列で `IDWriteFontFallback::MapCharacters` を引く）。ラテン文字なら Segoe UI だけで、矢印や図形（`▾` など）は豆腐になる。fontconfig は長い一覧を返すので、Linux では起きない。
 - そこで、文字種を準備するとき（`prepare_fallback`）に、システムの 1 つを先に入れさせてから、`Segoe UI Symbol`、`Segoe UI Emoji`、`Cambria Math` を後ろに足す。Chromium も Windows ではこれらに落ちる。
 
+## 影と縁取り
+
+CSS の `text-shadow` と `-webkit-text-stroke`、`paint-order` に当たる。どれも継承する。
+
+```rust
+text("見出し")
+    .text_strokes(vec![
+        TextStroke { width: 6.0, color: Color::WHITE },   // 先頭が上
+        TextStroke { width: 16.0, color: Color::BLACK },  // 広いものを後ろに置くと、外側の縁になる
+    ])
+    .paint_order(PaintOrder::Stroke)              // 縁を文字の下に敷く
+    .text_shadow(TextShadow { offset_x: 0.0, offset_y: 4.0, blur: 8.0, color: Color::from_rgba(0x00000099) })
+```
+
+- 縁取りの幅は CSS と同じく輪郭の中心から両側に半分ずつ。`PaintOrder::Normal`（既定）では縁が文字の上に乗り、太くすると文字が痩せる。`PaintOrder::Stroke` では文字の下に敷かれ、外側の半分だけが見える。動画のテロップの縁取りはこちら。
+- CSS の縁取りは 1 本だけだが、ここでは何本でも持てる（先頭が上）。二重の縁取りが書ける。
+- 影は描かれた文字そのもの（縁取りと下線を含む）を 1 色にしてずらしたもの。先頭が上で、文字より下に描く。
+- 描く順は、影（最後のものから）、縁取りと文字（`paint_order` の順）、下線と取り消し線。
+- 色付きのグリフ（絵文字）には縁取りがつかない。輪郭を持たないため。
+- 付くのはテキストのノードだけで、入力欄（`TextEdit`）の文字には付かない。
+
+### 方式
+
+- `GlyphRun` に `stroke`（物理ピクセルの幅、0 は塗り）を持たせた。swash の `Render::style` に `zeno::Stroke` を渡してラスタライズする。角は丸め（`Join::Round`）。文字の輪郭は鋭い角が多く、マイターではとげが出るため。アトラスのキーに幅（1/64 px 単位）を含める。
+- 縁取りした文字の描画範囲（`damage::glyph_run_bounds`）は幅の半分だけ広げる。
+- ぼかしのない影は、ずらした `GlyphRun` を同じシーンに並べるだけ。ぼかしのある影は、影の文字だけを中身とするレイヤーにして、`Image::content().blur(r)` のフィルタを付ける（[16](16-filters.md) のぼかしと同じ経路）。
+- そのレイヤーのキーは、ノードのキーに影の番号を混ぜ、最上位ビット（`NOT_A_NODE`）を立てたもの。ノードのキーは世代が 2^31 を超えない限りこのビットを持たない。入れ子のレイヤーを探す `nested_layers` はこのビットのあるキーを飛ばす。
+- 影と縁取りの一覧は `Arc<[T]>` で持つ。継承する性質なので、子のスタイルを作るたびに複製される。`Vec` だと空でなければ毎回確保が要る。既定値は共有の空の一覧で、既定のスタイルを作るときにも確保しない。
+- `Style` が大きくなると、デバッグビルドのスタックが増える。ビルダーの呼び出し（`div().w(..).h(..)`）ごとに `Style` の複製がスタックに積まれるため。`anti-webui-markdown` の `links_go_to_headings_or_out` は、この変更の前から既定のスタック（2 MiB）の 2000 KiB 近くを使っており、今はぎりぎり収まっている。
+
 ## フォントの同梱
 
 アプリに同梱したフォントを登録できる。CSS の `@font-face` に相当する。システムのフォントは登録しなくても名前で使える。

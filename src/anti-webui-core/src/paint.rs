@@ -15,7 +15,7 @@ use crate::text::{Brush, TextLayout};
 use crate::tree::{Document, LayerMemo, Node, NodeId, NodeKind, popup_id};
 use anti_webui_style::{
     BackgroundRepeat, BackgroundSize, Color, ComputedStyle, ImageRendering, Length, ObjectFit,
-    Overflow, SvgPaint,
+    Overflow, PaintOrder, SvgPaint, TextShadow, TextStroke,
 };
 use parley::PositionedLayoutItem;
 use slotmap::{Key, KeyData};
@@ -49,6 +49,10 @@ pub struct DragIconFrame {
 
 /// Identifies what shows for something being dragged in scenes.
 const DRAG_LAYER: u64 = u64::MAX - 1;
+
+/// Marks the keys of layers that aren't of a node of their own, such as the blurred shadows of a
+/// text: a node's key never has it (its version would have to pass 2^31).
+const NOT_A_NODE: u64 = 1 << 63;
 
 /// What it is painted from.
 #[derive(Clone, Copy, Debug)]
@@ -226,6 +230,7 @@ fn selected_runs(
                 ),
                 embolden: synthesis.embolden(),
                 skew: synthesis.skew(),
+                stroke: 0.0,
                 color,
                 glyphs,
                 clip,
@@ -633,7 +638,9 @@ fn nested_layers(scene: &Scene) -> Vec<NodeId> {
         .primitives
         .iter()
         .filter_map(|p| match p {
-            Primitive::Layer(l) => Some(NodeId::from(KeyData::from_ffi(l.key))),
+            Primitive::Layer(l) if l.key & NOT_A_NODE == 0 => {
+                Some(NodeId::from(KeyData::from_ffi(l.key)))
+            }
             _ => None,
         })
         .collect()
@@ -1274,23 +1281,30 @@ impl Painter<'_> {
                 self.chunk(id, part::CONTENT);
                 let color = if t.in_svg { text_fill(c) } else { c.color };
                 let base = (fade(color, opacity), c.underline, c.strikethrough);
+                let ink = Ink {
+                    shadows: &c.text_shadows,
+                    strokes: &c.text_strokes,
+                    order: c.paint_order,
+                    opacity,
+                    key: id.data().as_ffi(),
+                };
                 match &t.rich {
                     Some(rich) => self.text_layout_with(
                         &t.layout,
                         node.abs.origin(),
                         node.clip_shape(),
+                        ink,
                         |brush| match brush.checked_sub(1).and_then(|i| rich.paint(i as usize)) {
                             Some(p) => (fade(p.color, opacity), p.underline, p.strikethrough),
                             None => base,
                         },
                     ),
-                    None => self.text_layout(
+                    None => self.text_layout_with(
                         &t.layout,
                         node.abs.origin(),
-                        base.0,
                         node.clip_shape(),
-                        base.1,
-                        base.2,
+                        ink,
+                        |_| base,
                     ),
                 }
                 if let Some(row) = &t.row {
@@ -1933,43 +1947,77 @@ impl Painter<'_> {
         underline: bool,
         strikethrough: bool,
     ) {
-        self.text_layout_with(layout, origin, clip, |_| (color, underline, strikethrough));
+        let ink = Ink::PLAIN;
+        self.text_layout_with(layout, origin, clip, ink, |_| {
+            (color, underline, strikethrough)
+        });
     }
 
-    /// Paints the runs of a text with the color and lines `style` gives for their brush.
+    /// Paints the runs of a text with the color and lines `style` gives for their brush, with the
+    /// shadows and strokes of `ink`.
     fn text_layout_with(
         &mut self,
         layout: &TextLayout,
         origin: PointI,
         clip: Clip,
-        style: impl Fn(crate::text::Brush) -> (Color, bool, bool),
+        ink: Ink<'_>,
+        style: impl Fn(Brush) -> (Color, bool, bool),
     ) {
-        let (ox, oy) = (origin.x as f32, origin.y as f32);
-        for line in layout.layout.lines() {
-            for item in line.items() {
-                let PositionedLayoutItem::GlyphRun(glyph_run) = item else {
-                    continue;
-                };
-                let (color, underline, strikethrough) = style(glyph_run.style().brush);
-                self.glyph_run(&glyph_run, ox, oy, color, clip);
-                let run = glyph_run.run();
-                let m = run.font_metrics();
-                let x0 = (ox + glyph_run.offset()).round() as i32;
-                let x1 = (ox + glyph_run.offset() + glyph_run.advance()).round() as i32;
-                let baseline = (oy + glyph_run.baseline()).round() as i32;
-                let thickness = m.underline_size.round().max(1.0) as i32;
-                if underline {
-                    let y = baseline - m.underline_offset.round() as i32;
-                    self.scene
-                        .fill(RectI::new(x0, y, x1 - x0, thickness), color, clip);
-                }
-                if strikethrough {
-                    let t = m.strikethrough_size.round().max(1.0) as i32;
-                    let y = baseline - m.strikethrough_offset.round() as i32;
-                    self.scene.fill(RectI::new(x0, y, x1 - x0, t), color, clip);
-                }
+        let scale = self.doc.scale.as_f32();
+        let text = Lettering {
+            layout,
+            origin,
+            ink: &ink,
+            scale,
+            style: &style,
+        };
+        // The last shadow is the lowest.
+        for (i, shadow) in ink.shadows.iter().enumerate().rev() {
+            let color = fade(shadow.color, ink.opacity);
+            if color.is_transparent() {
+                continue;
             }
+            let shift = (shadow.offset_x * scale, shadow.offset_y * scale);
+            if shadow.blur <= 0.0 {
+                text.letters(&mut self.scene.primitives, shift, clip, Some(color));
+                continue;
+            }
+            // Blurred, the letters are a layer of their own, the blur its filter.
+            let mut shape = Vec::new();
+            text.letters(&mut shape, shift, Clip::NONE, Some(color));
+            let touched = shape
+                .iter()
+                .map(primitive_bounds)
+                .reduce(|a, b| a.union(&b))
+                .unwrap_or_default();
+            if touched.is_empty() {
+                continue;
+            }
+            let image = Image::content().blur(shadow.blur);
+            let reach = image.reach_px(scale);
+            self.scene.primitives.push(Primitive::Layer(Layer {
+                key: NOT_A_NODE | (ink.key ^ ((i as u64 + 1) << 52)),
+                clip,
+                origin: PointI::default(),
+                transform: Affine::IDENTITY,
+                bounds: touched.outset(reach),
+                opacity: 1.0,
+                content: Arc::new(Scene {
+                    primitives: shape,
+                    ..Scene::default()
+                }),
+                filter: Some(Box::new(LayerFilter {
+                    image,
+                    rect: touched,
+                    border: [0; 4],
+                    padding: [0; 4],
+                    radii: [0.0; 4],
+                    scale,
+                    reach,
+                })),
+            }));
         }
+        text.letters(&mut self.scene.primitives, (0.0, 0.0), clip, None);
     }
 
     /// The backgrounds of the spans of a text, one box per line a span is on. They are as tall
@@ -2062,37 +2110,135 @@ impl Painter<'_> {
             }
         }
     }
+}
 
-    fn glyph_run(
-        &mut self,
-        glyph_run: &parley::GlyphRun<'_, Brush>,
-        ox: f32,
-        oy: f32,
-        color: Color,
+/// How the letters of a text are painted besides their colors: see `docs/design/04-text.md`.
+#[derive(Clone, Copy)]
+struct Ink<'a> {
+    /// The first is on top.
+    shadows: &'a [TextShadow],
+    /// The first is on top.
+    strokes: &'a [TextStroke],
+    order: PaintOrder,
+    opacity: f32,
+    /// Of the node, for the keys of the layers of blurred shadows.
+    key: u64,
+}
+
+impl Ink<'_> {
+    const PLAIN: Ink<'static> = Ink {
+        shadows: &[],
+        strokes: &[],
+        order: PaintOrder::Normal,
+        opacity: 1.0,
+        key: 0,
+    };
+}
+
+/// A text as it is to be painted.
+struct Lettering<'a, F> {
+    layout: &'a TextLayout,
+    origin: PointI,
+    ink: &'a Ink<'a>,
+    /// Physical pixels per logical pixel.
+    scale: f32,
+    /// The color and the lines of the runs of a brush.
+    style: &'a F,
+}
+
+impl<F: Fn(Brush) -> (Color, bool, bool)> Lettering<'_, F> {
+    /// The letters, their strokes and their lines, moved by `shift`, into `out`: in their colors,
+    /// or all in `tint` (for a shadow).
+    fn letters(
+        &self,
+        out: &mut Vec<Primitive>,
+        shift: (f32, f32),
         clip: Clip,
+        tint: Option<Color>,
     ) {
-        let run = glyph_run.run();
-        let synthesis = run.synthesis();
-        let glyphs: Vec<Glyph> = glyph_run
-            .positioned_glyphs()
-            .map(|g| Glyph {
-                id: g.id,
-                x: ox + g.x,
-                y: (oy + g.y).round(),
-            })
-            .collect();
-        if glyphs.is_empty() {
-            return;
+        let (ink, scale, style) = (self.ink, self.scale, self.style);
+        let (ox, oy) = (
+            self.origin.x as f32 + shift.0,
+            self.origin.y as f32 + shift.1,
+        );
+        for line in self.layout.layout.lines() {
+            for item in line.items() {
+                let PositionedLayoutItem::GlyphRun(glyph_run) = item else {
+                    continue;
+                };
+                let (color, underline, strikethrough) = style(glyph_run.style().brush);
+                let color = tint.unwrap_or(color);
+                let run = glyph_run.run();
+                let synthesis = run.synthesis();
+                let glyphs: Vec<Glyph> = glyph_run
+                    .positioned_glyphs()
+                    .map(|g| Glyph {
+                        id: g.id,
+                        x: ox + g.x,
+                        y: (oy + g.y).round(),
+                    })
+                    .collect();
+                if !glyphs.is_empty() {
+                    let paint = |out: &mut Vec<Primitive>, color: Color, stroke: f32| {
+                        out.push(Primitive::Glyphs(GlyphRun {
+                            font: run.font().clone(),
+                            size: run.font_size(),
+                            normalized_coords: rounded_coords(
+                                run.normalized_coords().iter().map(|c| c.to_bits()),
+                            ),
+                            embolden: synthesis.embolden(),
+                            skew: synthesis.skew(),
+                            color,
+                            stroke,
+                            glyphs: glyphs.clone(),
+                            clip,
+                        }));
+                    };
+                    // The last stroke is the lowest.
+                    let strokes = |out: &mut Vec<Primitive>| {
+                        for s in ink.strokes.iter().rev() {
+                            let c = tint.unwrap_or_else(|| fade(s.color, ink.opacity));
+                            if s.width > 0.0 && !c.is_transparent() {
+                                paint(out, c, s.width * scale);
+                            }
+                        }
+                    };
+                    if ink.order == PaintOrder::Stroke {
+                        strokes(out);
+                        paint(out, color, 0.0);
+                    } else {
+                        paint(out, color, 0.0);
+                        strokes(out);
+                    }
+                }
+                let m = run.font_metrics();
+                let x0 = (ox + glyph_run.offset()).round() as i32;
+                let x1 = (ox + glyph_run.offset() + glyph_run.advance()).round() as i32;
+                let baseline = (oy + glyph_run.baseline()).round() as i32;
+                let mut fill = |rect: RectI| {
+                    if color.is_transparent() || rect.is_empty() {
+                        return;
+                    }
+                    out.push(Primitive::Quad(Quad {
+                        rect,
+                        background: color,
+                        border_widths: [0; 4],
+                        border_color: Color::TRANSPARENT,
+                        radii: [0.0; 4],
+                        clip,
+                    }))
+                };
+                if underline {
+                    let t = m.underline_size.round().max(1.0) as i32;
+                    let y = baseline - m.underline_offset.round() as i32;
+                    fill(RectI::new(x0, y, x1 - x0, t));
+                }
+                if strikethrough {
+                    let t = m.strikethrough_size.round().max(1.0) as i32;
+                    let y = baseline - m.strikethrough_offset.round() as i32;
+                    fill(RectI::new(x0, y, x1 - x0, t));
+                }
+            }
         }
-        self.scene.primitives.push(Primitive::Glyphs(GlyphRun {
-            font: run.font().clone(),
-            size: run.font_size(),
-            normalized_coords: rounded_coords(run.normalized_coords().iter().map(|c| c.to_bits())),
-            embolden: synthesis.embolden(),
-            skew: synthesis.skew(),
-            color,
-            glyphs,
-            clip,
-        }));
     }
 }

@@ -317,6 +317,36 @@ pub trait Styled: Sized {
         self
     }
 
+    fn text_shadow(mut self, shadow: TextShadow) -> Self {
+        self.style_mut().text_shadows = Some(std::sync::Arc::new([shadow]));
+        self
+    }
+
+    /// The first is on top.
+    fn text_shadows(mut self, shadows: Vec<TextShadow>) -> Self {
+        self.style_mut().text_shadows = Some(shadows.into());
+        self
+    }
+
+    fn text_stroke(mut self, width: f32, color: impl Into<Color>) -> Self {
+        self.style_mut().text_strokes = Some(std::sync::Arc::new([TextStroke {
+            width,
+            color: color.into(),
+        }]));
+        self
+    }
+
+    /// The first is on top: `[(6.0, white), (12.0, black)]` edges letters in white, then black.
+    fn text_strokes(mut self, strokes: Vec<TextStroke>) -> Self {
+        self.style_mut().text_strokes = Some(strokes.into());
+        self
+    }
+
+    fn paint_order(mut self, order: PaintOrder) -> Self {
+        self.style_mut().paint_order = Some(order);
+        self
+    }
+
     fn shadows(mut self, shadows: Vec<BoxShadow>) -> Self {
         self.style_mut().shadows = Some(shadows);
         self

@@ -619,6 +619,36 @@ pub struct BoxShadow {
     pub inset: bool,
 }
 
+/// A shadow of text, as CSS `text-shadow`: the letters as they are painted, strokes and lines
+/// included, in one color, moved and blurred. Logical pixels.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct TextShadow {
+    pub offset_x: f32,
+    pub offset_y: f32,
+    /// The standard deviation, as for `blur`.
+    pub blur: f32,
+    pub color: Color,
+}
+
+/// A line along the outlines of letters, as CSS `-webkit-text-stroke`: `width` logical pixels
+/// across, half of it outside the letter and half inside.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct TextStroke {
+    pub width: f32,
+    pub color: Color,
+}
+
+/// Whether the strokes of text go over its letters or under them, as CSS `paint-order`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PaintOrder {
+    /// The letters, then the strokes over them: a wide stroke eats into the letters.
+    #[default]
+    Normal,
+    /// The strokes, then the letters over them: only what is outside the letters shows, the edging
+    /// of captions.
+    Stroke,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

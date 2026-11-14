@@ -302,6 +302,8 @@ fn glyph_run_bounds(run: &GlyphRun) -> RectI {
     if run.embolden {
         pad += run.size / 24.0 + 1.0;
     }
+    // Half of a stroke is outside the letters.
+    pad += run.stroke.max(0.0) / 2.0;
     if let Some(skew) = run.skew {
         pad += skew.to_radians().tan().abs() * ey1.max(-ey0);
     }

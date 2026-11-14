@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use swash::FontRef;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
-use swash::zeno::{Format, Transform, Vector};
+use swash::zeno::{Format, Join, Stroke, Transform, Vector};
 
 /// Sub-pixel positions per pixel on the x axis.
 const SUBPIXEL_STEPS: f32 = 4.0;
@@ -25,6 +25,8 @@ struct GlyphKey {
     subpixel: u8,
     embolden: bool,
     skew: Option<i32>,
+    /// The width of the stroke in 1/64 px; 0 when it is filled.
+    stroke: u32,
     /// The number of its coordinates: no coordinates are 0.
     instance: u32,
 }
@@ -165,6 +167,7 @@ impl GlyphCache {
         let size = run.size * k;
         let size_key = (size * 64.0).round() as u32;
         let skew = run.skew.map(|s| (s * 100.0).round() as i32);
+        let stroke = (run.stroke.max(0.0) * k * 64.0).round() as u32;
         let instance = self.instance(&run.normalized_coords);
         for g in &run.glyphs {
             let (gx, gy) = (g.x * k, g.y * k);
@@ -183,12 +186,14 @@ impl GlyphCache {
                 subpixel: sub as u8,
                 embolden: run.embolden,
                 skew,
+                stroke,
                 instance,
             };
             let entry = match self.entries.get(&key) {
                 Some(e) => *e,
                 None => {
-                    let e = self.rasterize(run, size, g.id, sub / SUBPIXEL_STEPS)?;
+                    let (width, offset) = (stroke as f32 / 64.0, sub / SUBPIXEL_STEPS);
+                    let e = self.rasterize(run, size, width, g.id, offset)?;
                     if let Some(image) = &e {
                         self.areas[instance as usize] += image.width as u64 * image.height as u64;
                     }
@@ -217,11 +222,13 @@ impl GlyphCache {
         Some(())
     }
 
-    /// Rasterizes a glyph. `Some(None)` means the glyph is empty; `None` means the atlas is full.
+    /// Rasterizes a glyph, or a line `stroke` px wide along its outline. `Some(None)` means the
+    /// glyph is empty; `None` means the atlas is full.
     fn rasterize(
         &mut self,
         run: &GlyphRun,
         size: f32,
+        stroke: f32,
         glyph: u32,
         offset_x: f32,
     ) -> Option<Option<AtlasGlyph>> {
@@ -236,15 +243,26 @@ impl GlyphCache {
             .hint(false)
             .normalized_coords(run.normalized_coords.iter().copied())
             .build();
-        let sources = [
-            Source::ColorOutline(0),
-            Source::ColorBitmap(StrikeWith::BestFit),
-            Source::Outline,
-        ];
-        let mut render = Render::new(&sources);
+        // A stroke goes along outlines only: letters in color (emoji) have none to go along.
+        let sources: &[Source] = if stroke > 0.0 {
+            &[Source::Outline]
+        } else {
+            &[
+                Source::ColorOutline(0),
+                Source::ColorBitmap(StrikeWith::BestFit),
+                Source::Outline,
+            ]
+        };
+        let mut render = Render::new(sources);
         render
             .format(Format::Alpha)
             .offset(Vector::new(offset_x, 0.0));
+        if stroke > 0.0 {
+            // Round, as outlines of letters have sharp corners a miter would make spikes of.
+            let mut line = Stroke::new(stroke);
+            line.join(Join::Round);
+            render.style(line);
+        }
         if run.embolden {
             render.embolden(size / 24.0);
         }
@@ -333,6 +351,7 @@ mod tests {
             normalized_coords: coords.to_vec(),
             embolden: false,
             skew: None,
+            stroke: 0.0,
             color: Color::BLACK,
             glyphs: (40..60).map(|id| Glyph { id, x: 0.0, y: 0.0 }).collect(),
             clip: Clip::NONE,

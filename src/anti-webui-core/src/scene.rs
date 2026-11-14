@@ -166,6 +166,9 @@ pub struct GlyphRun {
     /// Synthetic italic skew in degrees.
     pub skew: Option<f32>,
     pub color: Color,
+    /// Physical pixels: 0 fills the letters; anything else is a line that wide along their
+    /// outlines, half outside.
+    pub stroke: f32,
     pub glyphs: Vec<Glyph>,
     pub clip: Clip,
 }

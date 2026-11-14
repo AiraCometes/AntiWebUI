@@ -207,6 +207,12 @@ define_style! {
     white_space: WhiteSpace = WhiteSpace::PreWrap, inherited;
     underline: bool = false, inherited;
     strikethrough: bool = false, inherited;
+    /// The first is on top. See `docs/design/04-text.md`. Shared, as what every node under one
+    /// inherits.
+    text_shadows: std::sync::Arc<[TextShadow]> = NO_TEXT_SHADOWS.clone(), inherited;
+    /// Not in CSS, which has one: the first is on top, so a wider one after it edges it.
+    text_strokes: std::sync::Arc<[TextStroke]> = NO_TEXT_STROKES.clone(), inherited;
+    paint_order: PaintOrder = PaintOrder::Normal, inherited;
     user_select: UserSelect = UserSelect::Text, inherited;
     selection_color: Color = Color::from_rgba(0x338fff59), inherited;
     /// The color of the text unless this says otherwise, as `caret-color: auto` is in CSS.
@@ -217,6 +223,12 @@ define_style! {
     /// The node or something around it is disabled. Set by the core and not by styles.
     disabled: bool = false, inherited;
 }
+
+/// Empty lists that are always the same ones: a default style allocates nothing for them.
+static NO_TEXT_SHADOWS: std::sync::LazyLock<std::sync::Arc<[TextShadow]>> =
+    std::sync::LazyLock::new(|| std::sync::Arc::new([]));
+static NO_TEXT_STROKES: std::sync::LazyLock<std::sync::Arc<[TextStroke]>> =
+    std::sync::LazyLock::new(|| std::sync::Arc::new([]));
 
 impl ComputedStyle {
     /// Whether the node is painted through a transform. See `docs/design/12-transform.md`.

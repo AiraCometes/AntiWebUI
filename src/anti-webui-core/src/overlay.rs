@@ -257,6 +257,7 @@ impl PerformanceOverlay {
                         ),
                         embolden: synthesis.embolden(),
                         skew: synthesis.skew(),
+                        stroke: 0.0,
                         color: TEXT,
                         glyphs,
                         clip: Clip::NONE,
