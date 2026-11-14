@@ -240,6 +240,9 @@ pub struct Node {
     /// Painted through a transform: `abs` and the descendants are in its own space, and the two
     /// below say how it sits in its parent's (see `docs/design/12-transform.md`).
     pub transformed: bool,
+    /// Laid out where it is but not shown there, and clipped by nothing around it: it is only
+    /// painted on its own, with `paint::paint_node`. See `Document::set_offscreen`.
+    pub offscreen: bool,
     /// When `transformed`: the clip that applies in the parent's coordinates.
     pub layer_clip: crate::scene::Clip,
     /// When `transformed`: the `space` of the parent's coordinates.
@@ -317,6 +320,7 @@ impl Node {
             scroll_root: false,
             space: None,
             transformed: false,
+            offscreen: false,
             layer_clip: crate::scene::Clip::NONE,
             outer_space: None,
             stacked: false,
@@ -1021,7 +1025,7 @@ impl Document {
     }
 
     /// An `img` is to show `source` now. What it showed stays until this shows.
-    pub(crate) fn set_image_source(&mut self, id: NodeId, source: anti_webui_style::ImageSource) {
+    pub fn set_image_source(&mut self, id: NodeId, source: anti_webui_style::ImageSource) {
         let Some(old) = self
             .nodes
             .get(id)
@@ -1095,6 +1099,24 @@ impl Document {
     pub fn mark_paint(&mut self) {
         self.dirty.paint = true;
         self.dirty.content = true;
+    }
+
+    /// Has the node laid out where it is but shown only when it is painted on its own (with
+    /// `paint::paint_node`), as a picture for something else: the document doesn't paint it or what
+    /// is in it, nothing around it clips it, and it is a stacking context. A scene in 3D that shows
+    /// 2D on a panel lays the 2D out like this.
+    pub fn set_offscreen(&mut self, id: NodeId, offscreen: bool) {
+        let Some(n) = self.nodes.get_mut(id) else {
+            return;
+        };
+        if n.offscreen == offscreen {
+            return;
+        }
+        n.offscreen = offscreen;
+        n.position_dirty = true;
+        self.mark_style_of(id);
+        self.invalidate_layout(id);
+        self.mark_paint();
     }
 
     /// Only what a node's shader paints changed. This can happen on every frame, so of the layers

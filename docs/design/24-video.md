@@ -235,6 +235,48 @@ GPU は表示に使っているものと同じデバイス（`DmabufContext::ren
 | `Source` | `MEDIA_ERR_NETWORK` | 開けない、読めない |
 | `Decode` | `MEDIA_ERR_DECODE` | 壊れている |
 
+## フレーム単位の読み出し
+
+再生（時計で進む）とは別に、決まった時刻のフレームを取り出す口を持つ。編集ソフトのシークや、動画の書き出しのように、アプリがどのフレームをいつ出すかを決める用途のためのもの。
+
+```rust
+let mut reader = VideoReader::open("clip.mp4", &VideoSettings::default(), None)?;
+let info = reader.info();                       // 大きさ、長さ、平均のフレームレート、音声の有無
+let frame = reader.frame_at(2.5)?;              // 2.5 秒に表示されるフレーム
+reader.seek(10.0)?;                             // 10 秒以前のキーフレームへ
+while let Some(f) = reader.next_frame()? { /* 表示順に 1 枚ずつ。f.start、f.duration */ }
+
+// 自分で選んだフレームを video 要素に出す。ソースは要らない
+with_doc(|d| show_frame(d, node, Some(frame.frame)));
+```
+
+- 時刻はストリームの開始を 0 とした秒。`frame_at(t)` は「`t` までに始まる最後のフレーム」で、無ければ最初のフレーム。
+- `frame_at` は直前に返したフレームの少し先（2 秒以内）なら読み進め、それ以外はキーフレームへ移動する。キーフレームの位置が大まかにしか分からないファイルで移動先が目的の時刻より後になったときは、さらに手前から読み直す。
+- 出すフレームはいつもメモリにある。GPU でデコードした（`render_node` を渡した）ときも転送してから渡す。デコーダのプールを占有しないので、アプリは好きなだけ持っていられる。GPU で 1 枚もデコードできないうちに失敗したら CPU に切り替える。
+- 時計を持たず、音も出さない（音は下の `AudioReader`）。スレッドも作らない（呼んだスレッドでデコードする）。
+
+`show_frame(doc, node, frame)` は `video` 要素にアプリが渡したフレームを表示する。大きさはフレームの大きさ（回転後）で、ソースがあれば閉じる。描画は普通の動画と同じ経路を通る。
+
+レンダラーはストリームごとに 1 枚のテクスチャを持つので、同じフレームを同時に複数の場所に出すときは `VideoFrame::restream(stream, alive)` で場所ごとのストリームにする（画素は共有する）。フレームとストリームの番号は `next_video_id()` で取る。
+
+FrameScript2 のプレビューがこれで作られている（キャッシュ、先読み、代わりのフレームはアプリ側）。
+
+### 音声の読み出し
+
+音も同じように、アプリが混ぜる用途のために順に取り出せる。
+
+```rust
+let mut reader = AudioReader::open("clip.mp4", &VideoSettings::default(), 48_000)?;
+reader.seek(10.0)?;                             // 10 秒以前の、デコードを始められる所へ
+while let Some(c) = reader.next_chunk()? { /* c.start 秒からの (左, 右) の f32 の組 */ }
+```
+
+- 出てくるのはいつも 2 ch の `f32`（インターリーブ）で、`open` で渡したサンプルレート。`libswresample` で変換する。
+- 時刻の原点は、映像があれば映像のストリームの開始時刻（`VideoReader` と同じ）、無ければ音のストリームの開始時刻。同じファイルの絵と音がずれない。
+- 各塊の `start` は前の塊の終わりから数える。ファイルの時刻が 20 ms 以上ずれたときだけそちらを信じる（丸めで隙間や重なりを作らない）。
+- `seek` の後、最初の塊は目的の時刻より後から始まることがある。正確な位置が要るアプリはさらに手前へ移動する（FrameScript2 がそうしている）。
+- 出力先（ALSA）は `AudioOutput` として公開している（S16、2 ch）。
+
 ## 音声
 
 ALSA（`libasound.so.2`）を `dlopen` で読む。PipeWire の環境でも `pipewire-alsa` を通して動く。Rust の音声クレートは `libasound` にリンクするので、無い環境で起動できなくなるため使わない。

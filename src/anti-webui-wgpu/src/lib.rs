@@ -541,12 +541,13 @@ impl Offscreen {
         let mut out = Vec::with_capacity((w * h * 4) as usize);
         for row in 0..h {
             let start = (row * padded) as usize;
-            for px in data[start..start + (w * 4) as usize].chunks_exact(4) {
-                if bgra {
+            let row = &data[start..start + (w * 4) as usize];
+            if bgra {
+                for px in row.chunks_exact(4) {
                     out.extend_from_slice(&[px[2], px[1], px[0], px[3]]);
-                } else {
-                    out.extend_from_slice(px);
                 }
+            } else {
+                out.extend_from_slice(row);
             }
         }
         out

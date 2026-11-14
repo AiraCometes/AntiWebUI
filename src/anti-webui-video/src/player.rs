@@ -13,7 +13,7 @@ use anti_webui_core::video::{
 };
 use std::collections::VecDeque;
 use std::ffi::{c_int, c_void};
-use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
@@ -35,11 +35,10 @@ const MAX_AUDIO_AHEAD: f64 = 0.5;
 /// Sound is written in pieces this long, in seconds, to react to being told something else.
 const AUDIO_PIECE: f64 = 0.02;
 
-static NEXT_ID: AtomicU64 = AtomicU64::new(1);
-static VAAPI_PIX_FMT: AtomicI32 = AtomicI32::new(-1);
+pub(crate) static VAAPI_PIX_FMT: AtomicI32 = AtomicI32::new(-1);
 
-fn next_id() -> u64 {
-    NEXT_ID.fetch_add(1, Ordering::Relaxed)
+pub(crate) fn next_id() -> u64 {
+    anti_webui_core::video::next_video_id()
 }
 
 /// Where the video is. Follows the sound while there is any, and otherwise the time.
@@ -150,7 +149,7 @@ struct Shared {
     state: Mutex<State>,
     changed: Condvar,
     /// For stopping FFmpeg while it waits for something to read.
-    stop: AtomicBool,
+    stop: Arc<AtomicBool>,
     waker: Arc<dyn Fn() + Send + Sync>,
 }
 
@@ -212,7 +211,7 @@ impl FfmpegStream {
                 events: Vec::new(),
             }),
             changed: Condvar::new(),
-            stop: AtomicBool::new(false),
+            stop: Arc::new(AtomicBool::new(false)),
             waker: request.waker.clone(),
         });
         let thread = shared.clone();
@@ -413,10 +412,10 @@ impl VideoStream for FfmpegStream {
 }
 
 /// An `AVPacket`.
-struct Packet {
-    ffmpeg: Arc<Ffmpeg>,
-    raw: *mut Opaque,
-    size: usize,
+pub(crate) struct Packet {
+    pub(crate) ffmpeg: Arc<Ffmpeg>,
+    pub(crate) raw: *mut Opaque,
+    pub(crate) size: usize,
 }
 
 // SAFETY: nothing else has it, and FFmpeg doesn't mind where it is freed.
@@ -430,23 +429,25 @@ impl Drop for Packet {
 }
 
 /// An `AVFormatContext` and what its streams are.
-struct Input {
-    ffmpeg: Arc<Ffmpeg>,
-    raw: *mut Opaque,
-    video: Option<StreamInfo>,
-    audio: Option<StreamInfo>,
+pub(crate) struct Input {
+    pub(crate) ffmpeg: Arc<Ffmpeg>,
+    pub(crate) raw: *mut Opaque,
+    pub(crate) video: Option<StreamInfo>,
+    pub(crate) audio: Option<StreamInfo>,
     /// Kept for as long as FFmpeg may call what asks about it.
-    _stop: Arc<Shared>,
+    _stop: Arc<AtomicBool>,
 }
 
 /// What a decoder needs to know of a stream.
 #[derive(Clone, Copy)]
-struct StreamInfo {
-    index: c_int,
-    par: *const Opaque,
-    decoder: *const Opaque,
-    time_base: f64,
-    rotation: u16,
+pub(crate) struct StreamInfo {
+    pub(crate) index: c_int,
+    /// The `AVStream`.
+    pub(crate) stream: *const Opaque,
+    pub(crate) par: *const Opaque,
+    pub(crate) decoder: *const Opaque,
+    pub(crate) time_base: f64,
+    pub(crate) rotation: u16,
 }
 
 // SAFETY: these belong to the `Input`, which outlives the threads they go to, and aren't changed.
@@ -461,13 +462,14 @@ impl Drop for Input {
 
 unsafe extern "C" fn interrupted(opaque: *mut c_void) -> c_int {
     // SAFETY: this is what `open_input` gave, which the `Input` holds on to.
-    let shared = unsafe { &*opaque.cast::<Shared>() };
-    c_int::from(shared.stop.load(Ordering::Relaxed))
+    let stop = unsafe { &*opaque.cast::<AtomicBool>() };
+    c_int::from(stop.load(Ordering::Relaxed))
 }
 
-fn open_input(
+/// Opens `source`. Setting `stop` stops what waits for it to be read.
+pub(crate) fn open_input(
     ffmpeg: &Arc<Ffmpeg>,
-    shared: &Arc<Shared>,
+    stop: &Arc<AtomicBool>,
     source: &str,
 ) -> Result<Input, VideoError> {
     let f = &ffmpeg.f;
@@ -480,10 +482,10 @@ fn open_input(
             return Err(VideoError::Source("out of memory".into()));
         }
         write::<Interrupt>(raw, l.format_interrupt, interrupted);
-        write::<*const Shared>(
+        write::<*const AtomicBool>(
             raw,
             l.format_interrupt + size_of::<Interrupt>(),
-            Arc::as_ptr(shared),
+            Arc::as_ptr(stop),
         );
         let code = (f.avformat_open_input)(
             &mut raw,
@@ -502,7 +504,7 @@ fn open_input(
             raw,
             video: None,
             audio: None,
-            _stop: shared.clone(),
+            _stop: stop.clone(),
         };
         let code = (f.avformat_find_stream_info)(raw, std::ptr::null_mut());
         if code < 0 {
@@ -545,6 +547,7 @@ unsafe fn stream_info(ffmpeg: &Ffmpeg, format: *mut Opaque, kind: c_int) -> Opti
         };
         Some(StreamInfo {
             index,
+            stream,
             par,
             decoder,
             time_base: time_base.as_f64(),
@@ -588,7 +591,7 @@ fn read_thread(shared: Arc<Shared>, request: VideoRequest) {
         Err(e) => return shared.fail(e),
     };
     VAAPI_PIX_FMT.store(ffmpeg.vaapi_pix_fmt, Ordering::Relaxed);
-    let input = match open_input(&ffmpeg, &shared, &request.source) {
+    let input = match open_input(&ffmpeg, &shared.stop, &request.source) {
         Ok(input) => input,
         Err(e) => return shared.fail(e),
     };
@@ -802,16 +805,16 @@ fn read_thread(shared: Arc<Shared>, request: VideoRequest) {
     drop(input);
 }
 
-fn packet_stream(packet: &Packet, l: &Layout) -> c_int {
+pub(crate) fn packet_stream(packet: &Packet, l: &Layout) -> c_int {
     // SAFETY: a packet that has been read into.
     unsafe { read(packet.raw, l.packet_stream_index) }
 }
 
 /// An `AVCodecContext`.
-struct Decoder {
-    ffmpeg: Arc<Ffmpeg>,
-    raw: *mut Opaque,
-    hardware: bool,
+pub(crate) struct Decoder {
+    pub(crate) ffmpeg: Arc<Ffmpeg>,
+    pub(crate) raw: *mut Opaque,
+    pub(crate) hardware: bool,
 }
 
 impl Drop for Decoder {
@@ -840,7 +843,7 @@ unsafe extern "C" fn pick_format(_: *mut Opaque, formats: *const c_int) -> c_int
     }
 }
 
-fn open_decoder(
+pub(crate) fn open_decoder(
     ffmpeg: &Arc<Ffmpeg>,
     info: &StreamInfo,
     decoder: *const Opaque,
@@ -878,7 +881,7 @@ fn open_decoder(
 }
 
 /// A decoder on the GPU, if there is one that can do this.
-fn hardware_decoder(
+pub(crate) fn hardware_decoder(
     ffmpeg: &Arc<Ffmpeg>,
     info: &StreamInfo,
     node: &std::path::Path,
@@ -929,7 +932,7 @@ fn hardware_decoder(
 }
 
 /// The number of threads to decode a picture with.
-fn thread_count() -> i64 {
+pub(crate) fn thread_count() -> i64 {
     std::thread::available_parallelism()
         .map_or(1, |n| n.get() as i64)
         .min(MAX_THREADS)
@@ -964,7 +967,7 @@ fn next_item(shared: &Shared, video: bool) -> Option<Item> {
 }
 
 /// What a frame holds on to.
-struct Keep {
+pub(crate) struct Keep {
     ffmpeg: Arc<Ffmpeg>,
     frames: Vec<*mut Opaque>,
     /// What it was converted into.
@@ -985,13 +988,13 @@ impl Drop for Keep {
     }
 }
 
-fn alloc_frame(ffmpeg: &Ffmpeg) -> *mut Opaque {
+pub(crate) fn alloc_frame(ffmpeg: &Ffmpeg) -> *mut Opaque {
     // SAFETY: nothing to it.
     unsafe { (ffmpeg.f.av_frame_alloc)() }
 }
 
 /// A conversion to what the renderer can take.
-struct Scaler {
+pub(crate) struct Scaler {
     ffmpeg: Arc<Ffmpeg>,
     raw: *mut Opaque,
     from: (c_int, c_int, c_int),
@@ -1035,7 +1038,12 @@ fn shape_of(name: &str) -> Shape {
 /// # Safety
 ///
 /// `frame` holds a decoded picture.
-unsafe fn color_of(ffmpeg: &Ffmpeg, frame: *const Opaque, name: &str, height: u32) -> VideoColor {
+pub(crate) unsafe fn color_of(
+    ffmpeg: &Ffmpeg,
+    frame: *const Opaque,
+    name: &str,
+    height: u32,
+) -> VideoColor {
     let l = ffmpeg.layout;
     // SAFETY: see above; the layout says where the fields are.
     let (space, range, trc): (c_int, c_int, c_int) = unsafe {
@@ -1063,7 +1071,7 @@ unsafe fn color_of(ffmpeg: &Ffmpeg, frame: *const Opaque, name: &str, height: u3
     }
 }
 
-fn memory_frame(
+pub(crate) fn memory_frame(
     ffmpeg: &Arc<Ffmpeg>,
     frame: *mut Opaque,
     scaler: &mut Option<Scaler>,
@@ -1521,11 +1529,11 @@ fn video_thread(
 }
 
 /// `SwrContext`.
-struct Resampler {
-    ffmpeg: Arc<Ffmpeg>,
-    raw: *mut Opaque,
+pub(crate) struct Resampler {
+    pub(crate) ffmpeg: Arc<Ffmpeg>,
+    pub(crate) raw: *mut Opaque,
     /// Sample format and rate it takes.
-    from: (c_int, c_int),
+    pub(crate) from: (c_int, c_int),
 }
 
 impl Drop for Resampler {

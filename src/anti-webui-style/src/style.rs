@@ -73,7 +73,7 @@ macro_rules! define_style {
 
 define_style! {
     display: Display = Display::Block, local;
-    position: Position = Position::Relative, local;
+    position: Position = Position::Static, local;
     /// What the inside of a shape in an `svg` is painted with.
     fill_paint: SvgPaint = SvgPaint::Color(Color::BLACK), inherited;
     /// What the outline of a shape in an `svg` is painted with.

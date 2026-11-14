@@ -421,6 +421,9 @@ pub struct CanvasDraw {
     pub opacity: f32,
     /// How many physical pixels make a logical one.
     pub scale: f32,
+    /// What it is drawn from, when that goes with the scene rather than staying on the thread of
+    /// the document.
+    pub portable: Option<crate::canvas::Portable>,
 }
 
 impl CanvasDraw {

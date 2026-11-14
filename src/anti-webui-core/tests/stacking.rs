@@ -1,4 +1,5 @@
-//! The paint order of `z_index` and `absolute`, and hit testing that agrees with it.
+//! The paint order of `z_index` and of what is positioned (CSS 2.1 Appendix E), and hit testing
+//! that agrees with it. `z_index` counts for what is positioned and for flex items, as in CSS.
 
 use anti_webui_core::Ui;
 use anti_webui_core::damage;
@@ -68,10 +69,10 @@ fn watching(hovered: Signal<u32>, n: u32, d: Div) -> Div {
 fn z_index_orders_siblings_around_the_ones_without() {
     let mut ui = mount(|| {
         div()
-            .child(tile(1).z_index(2))
+            .child(tile(1).relative().z_index(2))
             .child(tile(2))
-            .child(tile(3).z_index(-1))
-            .child(tile(4).z_index(1))
+            .child(tile(3).relative().z_index(-1))
+            .child(tile(4).relative().z_index(1))
             .child(tile(5))
     });
     assert_eq!(order(&mut ui), [3, 2, 5, 4, 1]);
@@ -91,15 +92,54 @@ fn absolute_goes_above_what_follows_it_without_a_z_index() {
 }
 
 #[test]
+fn relative_goes_with_absolute_in_the_order_of_the_tree() {
+    let mut ui = mount(|| {
+        div()
+            .child(tile(1).absolute())
+            .child(tile(2).relative())
+            .child(tile(3))
+    });
+    assert_eq!(order(&mut ui), [3, 1, 2]);
+}
+
+#[test]
+fn translucent_and_transformed_go_with_what_is_positioned() {
+    let mut ui = mount(|| {
+        div()
+            .child(tile(1).absolute())
+            .child(tile(2).opacity(0.5))
+            .child(tile(3).translate(1.0, 0.0))
+            .child(tile(4))
+    });
+    assert_eq!(order(&mut ui), [4, 1, 2, 3]);
+}
+
+#[test]
+fn z_index_is_for_what_is_positioned_and_for_flex_items() {
+    let mut ui = mount(|| div().child(tile(1).z_index(5)).child(tile(2)));
+    assert_eq!(order(&mut ui), [1, 2]);
+    let mut ui = mount(|| div().flex().child(tile(1).z_index(5)).child(tile(2)));
+    assert_eq!(order(&mut ui), [2, 1]);
+    // Past what has no box of its own.
+    let mut ui = mount(|| {
+        div()
+            .flex()
+            .child(show(|| true, || tile(1).z_index(5)))
+            .child(tile(2))
+    });
+    assert_eq!(order(&mut ui), [2, 1]);
+}
+
+#[test]
 fn a_stacking_context_keeps_its_descendants_together() {
     let mut ui = mount(|| {
         div()
             // Its child's high number only counts inside of it.
-            .child(tile(1).z_index(1).child(tile(2).z_index(100)))
-            .child(tile(3).z_index(2))
+            .child(tile(1).relative().z_index(1).child(tile(2).relative().z_index(100)))
+            .child(tile(3).relative().z_index(2))
             // Without a context, its child is ordered with the others above.
-            .child(tile(4).absolute().child(tile(5).z_index(5)))
-            .child(tile(6).z_index(3))
+            .child(tile(4).absolute().child(tile(5).relative().z_index(5)))
+            .child(tile(6).relative().z_index(3))
     });
     assert_eq!(order(&mut ui), [4, 1, 2, 3, 6, 5]);
 }
@@ -108,8 +148,8 @@ fn a_stacking_context_keeps_its_descendants_together() {
 fn negative_z_goes_above_its_contexts_background() {
     let mut ui = mount(|| {
         div()
-            .child(tile(1).z_index(0).child(tile(2).z_index(-1)).child(tile(3)))
-            .child(tile(4).child(tile(5).z_index(-1)))
+            .child(tile(1).relative().z_index(0).child(tile(2).relative().z_index(-1)).child(tile(3)))
+            .child(tile(4).child(tile(5).relative().z_index(-1)))
     });
     // The first is a context: 2 stays above its background. The other isn't: 5 goes to the root.
     assert_eq!(order(&mut ui), [5, 4, 1, 2, 3]);
@@ -119,8 +159,8 @@ fn negative_z_goes_above_its_contexts_background() {
 fn translucency_makes_a_stacking_context() {
     let mut ui = mount(|| {
         div()
-            .child(tile(1).opacity(0.5).child(tile(2).z_index(9)))
-            .child(tile(3).z_index(1))
+            .child(tile(1).opacity(0.5).child(tile(2).relative().z_index(9)))
+            .child(tile(3).relative().z_index(1))
     });
     assert_eq!(order(&mut ui), [1, 2, 3]);
     // And what is in it fades as one image with it, wherever it is painted from.
@@ -155,10 +195,10 @@ fn a_scroller_keeps_its_content_together_whether_or_not_it_overflows() {
                 div()
                     .h(100.0)
                     .overflow_y_scroll()
-                    .child(tile(1).z_index(9))
+                    .child(tile(1).relative().z_index(9))
                     .child(div().dyn_style(move |s| s.h(if big.get() { 500.0 } else { 1.0 }))),
             )
-            .child(tile(2).z_index(1))
+            .child(tile(2).relative().z_index(1))
     });
     assert_eq!(order(&mut ui), [1, 2]);
     big.set(true);
@@ -176,7 +216,7 @@ fn changes_take_effect_and_damage_what_moved() {
                 1,
                 tile(1)
                     .ml(10.0)
-                    .dyn_style(move |s| if z.get() != 0 { s.z_index(z.get()) } else { s }),
+                    .dyn_style(move |s| if z.get() != 0 { s.relative().z_index(z.get()) } else { s }),
             ))
             .child(watching(hovered, 2, tile(2).ml(10.0).mt(-20.0)))
             .child(tile(3).ml(200.0))
@@ -248,7 +288,7 @@ fn clips_still_apply_above_the_rest() {
             .child(div().h(20.0).w(100.0).overflow_clip().child(watching(
                 hovered,
                 1,
-                tile(1).z_index(5).h(100.0),
+                tile(1).relative().z_index(5).h(100.0),
             )))
             .child(watching(hovered, 2, tile(2)))
     });
@@ -280,7 +320,7 @@ fn removed_nodes_leave_the_lists() {
     let mut ui = mount(move || {
         div().child(tile(1)).child(show(
             move || shown.get(),
-            || tile(2).absolute().child(tile(3).z_index(1)),
+            || tile(2).absolute().child(tile(3).relative().z_index(1)),
         ))
     });
     assert_eq!(order(&mut ui), [1, 2, 3]);
@@ -288,4 +328,37 @@ fn removed_nodes_leave_the_lists() {
     assert_eq!(order(&mut ui), [1]);
     shown.set(true);
     assert_eq!(order(&mut ui), [1, 2, 3]);
+}
+
+#[test]
+fn a_ui_after_another_in_the_same_window_starts_afresh() {
+    // A `Ui` dropped without closing its window leaves the window to the next one: its root went
+    // with it, and the next one's root is a stacking context and a flex column all the same.
+    for _ in 0..20 {
+        let mut ui = mount(|| div().child(tile(1).absolute()).child(tile(2).opacity(0.5)).child(tile(3)));
+        assert_eq!(order(&mut ui), [3, 1, 2]);
+        let (nodes, flex) = anti_webui_core::tree::with_doc(|d| {
+            let root = d.root.unwrap();
+            (d.nodes.len(), d.nodes[root].computed.display == Display::Flex)
+        });
+        assert_eq!(nodes, 5);
+        assert!(flex);
+    }
+}
+
+#[test]
+fn what_comes_out_of_display_none_takes_its_place_in_the_order() {
+    let shown = signal(false);
+    let mut ui = mount(move || {
+        div()
+            .child(tile(1).relative())
+            .child(
+                div()
+                    .dyn_style(move |s| if shown.get() { s } else { s.hidden() })
+                    .child(tile(2).opacity(0.5)),
+            )
+    });
+    assert_eq!(order(&mut ui), [1]);
+    shown.set(true);
+    assert_eq!(order(&mut ui), [1, 2]);
 }

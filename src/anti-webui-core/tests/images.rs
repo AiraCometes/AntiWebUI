@@ -266,6 +266,23 @@ fn what_lies_over_a_picture_has_no_say_in_its_size() {
 }
 
 #[test]
+fn what_lies_over_a_picture_is_laid_out_as_its_display_says() {
+    let over = node_ref();
+    let mut ui = mount(|| {
+        div().child(
+            img(png(100, 50))
+                .flex()
+                .items_center()
+                .justify_center()
+                .child(div().h(10.0).w(20.0).node_ref(over)),
+        )
+    });
+    load(&mut ui);
+    let r = with_doc(|d| d.get(over.get().unwrap()).unwrap().rect);
+    assert_eq!((r.x, r.y), (40, 20), "in the middle, as a flex box puts it");
+}
+
+#[test]
 fn those_who_ask_are_told_once() {
     let (sized, decoded, failed) = (
         Rc::new(Cell::new(None)),

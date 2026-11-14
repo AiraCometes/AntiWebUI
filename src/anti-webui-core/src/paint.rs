@@ -129,10 +129,47 @@ pub(crate) fn paint_snapshot(doc: &Document, id: NodeId, now: Instant) -> Option
         settling: Vec::new(),
         magnified: 1.0,
         pictures: 0,
+        root: None,
     };
+    // What is in it but painted from the list of a stacking context around it goes with it, below
+    // or above it as it is there.
+    painter.root = Some(id);
+    let (below, above) = lifted_from(doc, id);
+    painter.stacked(&below, 1.0, RectI::INFINITE);
     painter.node_contents(id, 1.0, RectI::INFINITE);
+    painter.stacked(&above, 1.0, RectI::INFINITE);
     let touched = what_it_touches(&scene);
     Some((Arc::new(rekeyed(scene)), touched, b))
+}
+
+/// A node and what is in it, painted on their own, as they look in the document now: to be drawn
+/// somewhere else than where they are, as a picture (the panels of a scene in 3D, say). Returns the
+/// scene, in the coordinates of the document, and the box of the node in them. The node is painted
+/// whatever clips it where it is, so it can be laid out in a box that hides it.
+pub fn paint_node(doc: &Document, id: NodeId, now: Instant) -> Option<(Arc<Scene>, RectI)> {
+    let (scene, _, rect) = paint_snapshot(doc, id, now)?;
+    Some((scene, rect))
+}
+
+/// The descendants of `id` that the nearest stacking context around it paints, with a negative
+/// `z_index` and without; nothing if it is a stacking context itself, which paints them.
+fn lifted_from(doc: &Document, id: NodeId) -> (Vec<NodeId>, Vec<NodeId>) {
+    if doc.get(id).is_none_or(|n| n.stacking_context) {
+        return Default::default();
+    }
+    let context = doc
+        .ancestors(id)
+        .into_iter()
+        .skip(1)
+        .find(|&a| doc.nodes[a].stacking_context);
+    let Some(list) = context.and_then(|c| doc.stacking.get(&c)) else {
+        return Default::default();
+    };
+    let inside = |n: &NodeId| *n != id && doc.is_ancestor(id, *n);
+    (
+        list.nodes[..list.negative].iter().copied().filter(inside).collect(),
+        list.nodes[list.negative..].iter().copied().filter(inside).collect(),
+    )
 }
 
 /// Part of a layout with its coordinates at `origin`: the clusters in the byte range.
@@ -315,6 +352,7 @@ fn paint_drag_preview(
         settling: Vec::new(),
         magnified: 1.0,
         pictures: 0,
+        root: None,
     };
     painter.contents(portal, 1.0, RectI::INFINITE);
     settling.append(&mut painter.settling);
@@ -456,6 +494,7 @@ fn paint_root(
         settling: Vec::new(),
         magnified: 1.0,
         pictures: 0,
+        root: None,
     };
     if doc.nodes[root].is_popup() {
         painter.contents(root, 1.0, screen);
@@ -762,6 +801,7 @@ pub fn paint_everything(doc: &Document, now: Instant) -> Scene {
         settling: Vec::new(),
         magnified: 1.0,
         pictures: 0,
+        root: None,
     };
     if let Some(root) = doc.fullscreen.element {
         painter.node_contents(root, 1.0, RectI::INFINITE);
@@ -832,6 +872,8 @@ struct Painter<'a> {
     magnified: f64,
     /// Counts the pictures painted, to find out whether a layer has any.
     pictures: u32,
+    /// The node painted on its own, which is painted even if it is offscreen.
+    root: Option<NodeId>,
 }
 
 impl Painter<'_> {
@@ -1043,7 +1085,7 @@ impl Painter<'_> {
         let Some(node) = doc.nodes.get(id) else {
             return;
         };
-        if !node.visible {
+        if !node.visible || (node.offscreen && self.root != Some(id)) {
             return;
         }
         let opacity = opacity * node.computed.opacity;
@@ -1518,7 +1560,11 @@ impl Painter<'_> {
         }
         let natural = data.natural.map(|(w, h)| (scale.pxf(w), scale.pxf(h)));
         let rect = fitted_rect(content, natural, c.object_fit, c.object_position, scale);
-        let Some(frame) = doc.videos.borrow_mut().frame(id, self.now) else {
+        let frame = match &data.frame {
+            Some(frame) => Some(frame.clone()),
+            None => doc.videos.borrow_mut().frame(id, self.now),
+        };
+        let Some(frame) = frame else {
             return;
         };
         self.scene.primitives.push(Primitive::Video(VideoDraw {
@@ -1555,6 +1601,7 @@ impl Painter<'_> {
             clip: node.clip_shape(),
             opacity: snapped_opacity(opacity),
             scale: doc.scale.pxf(1.0),
+            portable: data.portable.clone(),
         }));
     }
 

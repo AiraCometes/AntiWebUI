@@ -355,7 +355,12 @@ pub enum AlignItems {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum Position {
+    /// Not positioned: painted in the order of the tree, under what is positioned (CSS's
+    /// `static`).
     #[default]
+    Static,
+    /// Laid out as `Static`, but positioned for what goes over what: painted with what is
+    /// `Absolute`, in the order of the tree.
     Relative,
     /// Positioned against the parent's padding box using `inset`.
     Absolute,

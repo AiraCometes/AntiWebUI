@@ -5,12 +5,17 @@
 //! let angle = signal(0.0f32);
 //! gpu_canvas::<Spinner>(move || angle.get()).w(320.0).h(200.0).rounded(16.0)
 //! ```
+//!
+//! A canvas can also go with the scene ([`portable`]): then whatever renderer draws the scene draws
+//! it, on whichever thread, with a `T` of its own.
 
-pub use anti_webui_core::canvas::GpuCanvas;
+pub use anti_webui_core::canvas::{GpuCanvas, Portable};
+use std::any::{Any, TypeId};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 /// What draws a [`gpu_canvas`].
 pub trait GpuPaint: 'static {
@@ -96,8 +101,7 @@ fn pass<'e>(
 /// Like `<canvas>`, it is 300 by 150 when nothing says how big, and what is drawn is as many pixels
 /// as the box is on the screen.
 pub fn gpu_canvas<T: GpuPaint>(props: impl Fn() -> T::Props + 'static) -> GpuCanvas {
-    static NEXT: AtomicU64 = AtomicU64::new(1);
-    let id = NEXT.fetch_add(1, Ordering::Relaxed);
+    let id = next_canvas_id();
     let canvas: Rc<Canvas<T>> = Rc::new(Canvas {
         props: RefCell::new(None),
         made: RefCell::new(None),
@@ -118,6 +122,179 @@ pub fn gpu_canvas<T: GpuPaint>(props: impl Fn() -> T::Props + 'static) -> GpuCan
         *was = Some(props);
         true
     })
+}
+
+/// A number for a canvas, which no other canvas of the program has.
+pub fn next_canvas_id() -> u64 {
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    NEXT.fetch_add(1, Ordering::Relaxed)
+}
+
+/// What a portable canvas is drawn from: `props`, drawn by a `T` that the renderer drawing the scene
+/// makes on its device and keeps for as long as the canvas is there. Give it to
+/// `CanvasData::portable` or `CanvasData::set_paint`; equal props are not told apart, so give a new
+/// one only when what is drawn changes.
+pub fn portable<T: GpuPaint>(props: T::Props) -> Arc<dyn Any + Send + Sync>
+where
+    T::Props: Send + Sync,
+{
+    Arc::new(Sent(Box::new(Typed::<T>(props))))
+}
+
+/// What [`portable`] makes; the renderer knows it by its type.
+struct Sent(Box<dyn Erased>);
+
+/// A [`GpuPaint`] and its props, without their types.
+trait Erased: Send + Sync {
+    fn kind(&self) -> TypeId;
+    fn name(&self) -> &'static str;
+    fn make(&self, gpu: &GpuInit<'_>) -> Box<dyn Any>;
+    /// Draws with what [`Erased::make`] made.
+    fn render(&self, painter: &mut dyn Any, frame: &mut GpuFrame<'_>);
+}
+
+struct Typed<T: GpuPaint>(T::Props);
+
+impl<T: GpuPaint> Erased for Typed<T>
+where
+    T::Props: Send + Sync,
+{
+    fn kind(&self) -> TypeId {
+        TypeId::of::<T>()
+    }
+
+    fn name(&self) -> &'static str {
+        std::any::type_name::<T>()
+    }
+
+    fn make(&self, gpu: &GpuInit<'_>) -> Box<dyn Any> {
+        Box::new(T::new(gpu))
+    }
+
+    fn render(&self, painter: &mut dyn Any, frame: &mut GpuFrame<'_>) {
+        if let Some(p) = painter.downcast_mut::<T>() {
+            p.render(&self.0, frame);
+        }
+    }
+}
+
+/// What a renderer keeps for the portable canvases it draws, by their ids.
+#[derive(Default)]
+pub(crate) struct Portables {
+    of: HashMap<u64, Kept>,
+}
+
+/// The type of what draws a portable canvas, the device it was made on, and it (`None` when making
+/// it failed).
+type Made = (TypeId, wgpu::Device, Option<Box<dyn Any>>);
+
+struct Kept {
+    life: std::sync::Weak<()>,
+    made: Option<Made>,
+    told: bool,
+}
+
+impl Portables {
+    pub(crate) fn alive(&self, id: u64) -> bool {
+        self.of.get(&id).is_some_and(|k| k.life.strong_count() > 0)
+    }
+
+    /// Forgets the canvases that are gone.
+    pub(crate) fn retain(&mut self) {
+        self.of.retain(|_, k| k.life.strong_count() > 0);
+    }
+
+    /// Has the canvas `id` drawn from `portable` into `target`, and says whether it was.
+    pub(crate) fn render(
+        &mut self,
+        id: u64,
+        portable: &Portable,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        target: &Target<'_>,
+    ) -> bool {
+        let Some(Sent(paint)) = portable.paint.downcast_ref::<Sent>() else {
+            return false;
+        };
+        let kept = self.of.entry(id).or_insert_with(|| Kept {
+            life: Arc::downgrade(&portable.life),
+            made: None,
+            told: false,
+        });
+        let tell = |told: &mut bool, what: &str, e: &wgpu::Error| {
+            if !std::mem::replace(told, true) {
+                log::error!("gpu_canvas<{}> {what}: {e}", paint.name());
+            }
+        };
+        if kept
+            .made
+            .as_ref()
+            .is_none_or(|(kind, d, _)| *kind != paint.kind() || d != device)
+        {
+            let gpu = GpuInit {
+                device,
+                queue,
+                format: CANVAS_FORMAT,
+                srgb_format: target.srgb_view.map(|_| SRGB_FORMAT),
+            };
+            let (painter, error) = guarded(device, || paint.make(&gpu));
+            if let Some(e) = &error {
+                tell(&mut kept.told, "couldn't be made", e);
+            }
+            kept.made = Some((paint.kind(), device.clone(), error.is_none().then_some(painter)));
+        }
+        let Some((_, _, Some(painter))) = kept.made.as_mut() else {
+            return false;
+        };
+        let (commands, error) = guarded(device, || {
+            let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("gpu_canvas"),
+            });
+            paint.render(
+                painter.as_mut(),
+                &mut GpuFrame {
+                    device,
+                    queue,
+                    encoder: &mut encoder,
+                    target: target.view,
+                    target_srgb: target.srgb_view,
+                    size: target.size,
+                    scale: target.scale,
+                },
+            );
+            encoder.finish()
+        });
+        if let Some(e) = &error {
+            tell(&mut kept.told, "failed to draw", e);
+            return false;
+        }
+        queue.submit([commands]);
+        true
+    }
+}
+
+/// A [`gpu_canvas`] that goes with the scene: whatever renderer draws the scene draws it, on
+/// whichever thread, with a `T` it makes on its own device. That is how a document made on one
+/// thread is drawn on another, or by several renderers at once.
+pub fn portable_canvas<T: GpuPaint>(props: impl Fn() -> T::Props + 'static) -> GpuCanvas
+where
+    T::Props: Clone + Send + Sync,
+{
+    let last: Rc<RefCell<Option<T::Props>>> = Rc::default();
+    let seen = last.clone();
+    anti_webui_core::canvas::portable_canvas_from(
+        next_canvas_id(),
+        move || {
+            let props = props();
+            let mut was = seen.borrow_mut();
+            if was.as_ref() == Some(&props) {
+                return false;
+            }
+            *was = Some(props);
+            true
+        },
+        move || portable::<T>(last.borrow().clone().expect("given just before")),
+    )
 }
 
 /// What draws each canvas of this thread, by its id: the UI and the renderer are on one thread.

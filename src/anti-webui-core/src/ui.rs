@@ -215,6 +215,9 @@ impl Ui {
             with_doc(|d| {
                 d.root = Some(root_id);
                 d.set_children(root_id, vec![view.0]);
+                // The root isn't among the nodes whose style is to be worked out, and a document a
+                // `Ui` before had can have so many that only those would be.
+                d.mark_style_all();
             });
         });
         Self {
@@ -2371,6 +2374,15 @@ impl Drop for Ui {
     fn drop(&mut self) {
         if !self.closed {
             self.owner.dispose();
+            // The root is the `Ui`'s own, not the owner's: it goes too, or the next `Ui` of the
+            // window finds it there.
+            crate::window::within(self.window, || {
+                with_doc(|d| {
+                    if let Some(root) = d.root {
+                        d.remove(root);
+                    }
+                })
+            });
             crate::window::release(self.window);
         }
     }

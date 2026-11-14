@@ -5,11 +5,17 @@ mod audio;
 pub mod cadence;
 mod ffi;
 mod player;
+mod reader;
+mod sound;
 
 use anti_webui_core::video::{
     VideoBackend, VideoError, VideoRequest, VideoSettings, VideoStream, set_video_backend,
 };
 use std::rc::Rc;
+
+pub use audio::Output as AudioOutput;
+pub use reader::{DecodedFrame, VideoInfo, VideoReader};
+pub use sound::{AudioChunk, AudioInfo, AudioReader};
 
 /// Decodes with FFmpeg.
 pub struct FfmpegBackend;

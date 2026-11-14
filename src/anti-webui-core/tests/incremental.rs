@@ -103,18 +103,27 @@ fn same_primitives_in_view(all: &[Primitive], culled: &[Primitive], view: RectI,
 
 /// The paint order worked out from the styles alone, without the lists the painter uses.
 fn paint_order(d: &Document) -> Vec<NodeId> {
+    // What makes a stacking context in CSS too (CSS 2.1 Appendix E, and the properties after it).
+    fn own(d: &Document, id: NodeId) -> bool {
+        let n = d.get(id).unwrap();
+        n.computed.z_index.is_some()
+            || n.computed.opacity < 1.0
+            || n.computed.blur > 0.0
+            || n.computed.backdrop_blur > 0.0
+            || n.filter.is_some()
+            || n.computed.has_transform()
+    }
     fn stacked(d: &Document, id: NodeId) -> bool {
         let n = d.get(id).unwrap();
         !matches!(n.kind, NodeKind::Fragment)
-            && (n.computed.z_index.is_some() || n.computed.position == Position::Absolute)
+            && d.root != Some(id)
+            && (n.computed.position != Position::Static || own(d, id))
     }
     fn context(d: &Document, id: NodeId) -> bool {
         let n = d.get(id).unwrap();
         !matches!(n.kind, NodeKind::Fragment)
             && (d.root == Some(id)
-                || n.computed.z_index.is_some()
-                || n.computed.opacity < 1.0
-                || n.computed.has_transform()
+                || own(d, id)
                 || n.computed.overflow_x == Overflow::Scroll
                 || n.computed.overflow_y == Overflow::Scroll)
     }

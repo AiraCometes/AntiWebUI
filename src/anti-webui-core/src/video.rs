@@ -202,6 +202,37 @@ impl std::fmt::Debug for VideoFrame {
     }
 }
 
+static NEXT_VIDEO_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
+/// A number no other frame or stream has, for [`VideoFrame::id`] and [`VideoFrame::stream`].
+#[doc(hidden)]
+pub fn next_video_id() -> u64 {
+    NEXT_VIDEO_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+}
+
+impl VideoFrame {
+    /// The same pictures as a frame of another stream. The renderer keeps one picture of each
+    /// stream on the GPU, so a frame that shows in more than one place at once needs a stream for
+    /// each. It holds on to `self` for the pixels.
+    pub fn restream(self: &Arc<Self>, stream: u64, alive: std::sync::Weak<()>) -> Arc<Self> {
+        let pixels = match &self.pixels {
+            VideoPixels::Memory(planes) => VideoPixels::Memory(planes.clone()),
+            #[cfg(unix)]
+            VideoPixels::Dmabuf(planes) => VideoPixels::Dmabuf(planes.clone()),
+        };
+        Arc::new(Self {
+            id: next_video_id(),
+            stream,
+            alive,
+            size: self.size,
+            pixels,
+            color: self.color,
+            rotation: self.rotation,
+            keep: Box::new(self.clone()),
+        })
+    }
+}
+
 /// What a stream has to say since the last time.
 #[derive(Clone, Debug, PartialEq)]
 #[doc(hidden)]
@@ -397,6 +428,8 @@ pub type VideoErrorListener = Rc<dyn Fn(&VideoError)>;
 #[doc(hidden)]
 pub struct VideoData {
     pub source: Option<String>,
+    /// What the program gave it to show with [`show_frame`], which a source doesn't change.
+    pub frame: Option<Arc<VideoFrame>>,
     /// In pixels, once that is known.
     pub natural: Option<(f32, f32)>,
     pub player: Option<VideoPlayer>,
@@ -510,6 +543,39 @@ pub(crate) fn set_source(doc: &mut Document, id: NodeId, source: String) {
     let store = doc.videos.get_mut();
     store.close(id);
     store.pending.push((id, source));
+}
+
+/// Shows `frame` in a `video`, or nothing, for programs that decode on their own and decide what
+/// shows when, like an editor that goes to a frame. Its size, turned as it says, is the size of the
+/// video. A source the video had is closed.
+pub fn show_frame(doc: &mut Document, id: NodeId, frame: Option<Arc<VideoFrame>>) {
+    let Some(data) = doc.nodes.get_mut(id).and_then(|n| n.video_mut()) else {
+        return;
+    };
+    let same = match (&data.frame, &frame) {
+        (Some(a), Some(b)) => a.id == b.id,
+        (None, None) => true,
+        _ => false,
+    };
+    if same {
+        return;
+    }
+    let natural = frame.as_ref().map(|f| {
+        let (w, h) = (f.size.0 as f32, f.size.1 as f32);
+        if f.rotation % 180 == 0 { (w, h) } else { (h, w) }
+    });
+    let resized = natural.is_some() && data.natural != natural;
+    if resized {
+        data.natural = natural;
+    }
+    data.frame = frame;
+    if data.source.take().is_some() {
+        doc.videos.get_mut().close(id);
+    }
+    if resized {
+        doc.invalidate_layout(id);
+    }
+    doc.mark_shader_of(id);
 }
 
 /// Opens what is waiting to be.

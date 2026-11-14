@@ -12,7 +12,7 @@
 int main(void){
 printf("avcodec %d avformat %d avutil %d\n", LIBAVCODEC_VERSION_MAJOR, LIBAVFORMAT_VERSION_MAJOR, LIBAVUTIL_VERSION_MAJOR);
 P(AVFormatContext,nb_streams);P(AVFormatContext,interrupt_callback);P(AVFormatContext,streams);P(AVFormatContext,duration);P(AVFormatContext,start_time);
-P(AVStream,index);P(AVStream,codecpar);P(AVStream,time_base);P(AVStream,duration);P(AVStream,start_time);
+P(AVStream,index);P(AVStream,codecpar);P(AVStream,time_base);P(AVStream,duration);P(AVStream,start_time);P(AVStream,avg_frame_rate);
 P(AVCodecParameters,codec_type);P(AVCodecParameters,codec_id);P(AVCodecParameters,coded_side_data);P(AVCodecParameters,nb_coded_side_data);P(AVCodecParameters,width);P(AVCodecParameters,height);
 P(AVCodecContext,opaque);P(AVCodecContext,get_format);P(AVCodecContext,hw_device_ctx);P(AVCodecContext,width);P(AVCodecContext,height);P(AVCodecContext,pkt_timebase);
 P(AVFrame,data);P(AVFrame,linesize);P(AVFrame,extended_data);P(AVFrame,width);P(AVFrame,height);P(AVFrame,nb_samples);P(AVFrame,format);P(AVFrame,pts);P(AVFrame,best_effort_timestamp);P(AVFrame,sample_rate);P(AVFrame,ch_layout);P(AVFrame,color_range);P(AVFrame,color_primaries);P(AVFrame,color_trc);P(AVFrame,colorspace);P(AVFrame,hw_frames_ctx);P(AVFrame,sample_aspect_ratio);P(AVFrame,duration);P(AVFrame,crop_top);P(AVFrame,crop_bottom);P(AVFrame,crop_left);P(AVFrame,crop_right);

@@ -548,9 +548,16 @@ fn resolve_node(
     if node.resolved != resolved || !same_layout(&node.computed, &computed) {
         out.layout.push(id);
     }
+    // As in CSS, `z_index` is for what is positioned and for flex items, and nothing else.
+    if computed.z_index.is_some() && computed.position == Position::Static && !in_flex(doc, id) {
+        computed.z_index = None;
+    }
+    let Some(node) = doc.nodes.get(id) else {
+        return;
+    };
     let filtered = node.filter.is_some();
     let root = doc.root == Some(id) || doc.fullscreen.element == Some(id);
-    let (stacked, context) = stacking_role(&node.kind, &computed, filtered, root);
+    let (stacked, context) = stacking_role(&node.kind, &computed, filtered || node.offscreen, root);
     let stacking_changed = stacked != node.stacked
         || context != node.stacking_context
         || (stacked && node.computed.z_index != computed.z_index);
@@ -722,21 +729,43 @@ fn apply_move(doc: &mut Document, id: NodeId, computed: &mut ComputedStyle) {
     }
 }
 
-/// Whether a node is painted from a stacking context's list, and whether it is a stacking context.
-/// See `docs/design/09-shadows-stacking-popups.md`.
+/// Whether the box of `id` is laid out by a flex container, past what has no box of its own.
+fn in_flex(doc: &Document, id: NodeId) -> bool {
+    let mut parent = doc.nodes.get(id).and_then(|n| n.parent);
+    while let Some(p) = parent {
+        let Some(n) = doc.nodes.get(p) else {
+            return false;
+        };
+        if matches!(n.kind, NodeKind::Fragment) || n.computed.display == Display::Contents {
+            parent = n.parent;
+            continue;
+        }
+        return n.computed.display == Display::Flex;
+    }
+    false
+}
+
+/// Whether a node is painted from a stacking context's list, and whether it is a stacking context:
+/// CSS 2.1 Appendix E. See `docs/design/09-shadows-stacking-popups.md`.
 fn stacking_role(kind: &NodeKind, c: &ComputedStyle, filtered: bool, root: bool) -> (bool, bool) {
     if matches!(kind, NodeKind::Fragment) || c.display == Display::Contents {
         return (false, root);
     }
-    let stacked = c.z_index.is_some() || c.position == Position::Absolute;
-    let context = root
-        || matches!(kind, NodeKind::Popup(_))
-        || c.z_index.is_some()
+    let popup = matches!(kind, NodeKind::Popup(_));
+    // What makes a stacking context in CSS too.
+    let own = c.z_index.is_some()
         || c.opacity < 1.0
         || c.blur > 0.0
         || c.backdrop_blur > 0.0
         || filtered
-        || c.has_transform()
+        || c.has_transform();
+    // What is positioned, and what makes a stacking context of its own (painted as if positioned
+    // with `z-index: 0`), goes over the rest by `z_index` and then in the order of the tree.
+    let stacked = !root && !popup && (c.position != Position::Static || own);
+    // A scroller is one only here: its content moves as one picture.
+    let context = root
+        || popup
+        || own
         || c.overflow_x == Overflow::Scroll
         || c.overflow_y == Overflow::Scroll;
     (stacked, context)
@@ -1106,11 +1135,24 @@ fn position_node(
         node.clip = Clip::NONE.rect;
         node.clip_radii = Clip::NONE.radii;
         node.space = Some(id);
+    } else if node.offscreen {
+        // Clipped by nothing around it: it is painted on its own.
+        node.clip = Clip::NONE.rect;
+        node.clip_radii = Clip::NONE.radii;
+        node.space = space;
     } else {
         node.clip = clip.rect;
         node.clip_radii = clip.radii;
         node.space = space;
     }
+    // The lists of what is stacked are in document order, which can change without anything about
+    // what is stacked changing (when what it is in comes out of `display: none`).
+    if node.stacked && node.doc_order != first {
+        doc.stacking_dirty = true;
+    }
+    let Some(node) = doc.nodes.get_mut(id) else {
+        return;
+    };
     node.doc_order = first;
     let max_x = (node.content_size.width - node.padding_abs().width).max(0);
     let max_y = (node.content_size.height - node.padding_abs().height).max(0);
@@ -1221,7 +1263,9 @@ fn skip_children(doc: &mut Document, id: NodeId, order: &mut u32) {
             n.subtree_bounds = RectI::default();
             n.scroll_root = false;
             n.position_dirty = true;
+            let moved = n.stacked && n.doc_order != first;
             n.doc_order = first;
+            doc.stacking_dirty |= moved;
             hide(doc, c, order);
             doc.nodes[c].subtree_nodes = *order - first;
         }
@@ -1502,8 +1546,12 @@ impl Engine<'_> {
                 self.doc.nodes[id].rect.width = w;
                 self.doc.nodes[id].rect.height = h;
                 let inner = ((w - pb_h).max(0), (h - pb_v).max(0));
-                // What is laid over the picture has no say in the size of the box.
-                self.block(id, Some(inner.0), Some(inner.1), Some(inner.0), true);
+                // What is laid over the picture has no say in the size of the box. It is laid out
+                // as the box's `display` says, as in CSS.
+                match self.doc.nodes[id].computed.display {
+                    Display::Flex => self.flex(id, Some(inner.0), Some(inner.1), Some(inner.0), true),
+                    _ => self.block(id, Some(inner.0), Some(inner.1), Some(inner.0), true),
+                };
                 let size = SizeI::new(w, h);
                 self.place_fragments(id, size);
                 self.layout_absolute(id, size);

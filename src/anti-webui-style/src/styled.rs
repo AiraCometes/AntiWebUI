@@ -237,6 +237,7 @@ pub trait Styled: Sized {
         justify_between => justify_content = JustifyContent::SpaceBetween;
         justify_around => justify_content = JustifyContent::SpaceAround;
         justify_evenly => justify_content = JustifyContent::SpaceEvenly;
+        static_position => position = Position::Static;
         relative => position = Position::Relative;
         absolute => position = Position::Absolute;
         w_full => width = Length::Percent(100.0);

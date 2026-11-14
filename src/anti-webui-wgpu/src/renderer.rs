@@ -592,7 +592,9 @@ pub struct Renderer {
     /// What each `gpu_canvas` is drawn into, by its id.
     gpu_canvases: HashMap<u64, CanvasTexture>,
     /// The canvases to draw before this frame, with how many pixels make a logical one.
-    canvas_draws: Vec<(u64, f32)>,
+    canvas_draws: Vec<(u64, f32, Option<crate::canvas::Portable>)>,
+    /// What draws the portable canvases, which go with the scene.
+    portables: crate::canvas::Portables,
     /// Whether textures can be seen as sRGB, which OpenGL can't.
     srgb_views: bool,
     filters_run: usize,
@@ -1097,6 +1099,7 @@ impl Renderer {
             canvases: HashMap::new(),
             gpu_canvases: HashMap::new(),
             canvas_draws: Vec::new(),
+            portables: Default::default(),
             srgb_views: device.adapter_info().backend != wgpu::Backend::Gl,
             filters_run: 0,
             max_texture: device.limits().max_texture_dimension_2d,
@@ -2353,7 +2356,7 @@ impl Renderer {
         if canvas.version != Some(d.version) {
             canvas.version = Some(d.version);
             let scale = d.scale * k as f32 * size.0 as f32 / rect.width as f32;
-            self.canvas_draws.push((d.id, scale));
+            self.canvas_draws.push((d.id, scale, d.portable.clone()));
         }
         let (clip_rect, clip_radii) = gpu_clip(&clip, target);
         pictures.push(PictureInstance {
@@ -2418,7 +2421,7 @@ impl Renderer {
 
     /// Has the canvases that changed draw, before anything that shows them.
     fn draw_canvases(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
-        for (id, scale) in std::mem::take(&mut self.canvas_draws) {
+        for (id, scale, portable) in std::mem::take(&mut self.canvas_draws) {
             let Some(canvas) = self.gpu_canvases.get_mut(&id) else {
                 continue;
             };
@@ -2428,7 +2431,10 @@ impl Renderer {
                 size: canvas.size,
                 scale,
             };
-            canvas.shown = crate::canvas::render(id, device, queue, &target);
+            canvas.shown = match &portable {
+                Some(p) => self.portables.render(id, p, device, queue, &target),
+                None => crate::canvas::render(id, device, queue, &target),
+            };
         }
     }
 
@@ -2642,7 +2648,10 @@ impl Renderer {
             self.canvases.remove(&self.target);
         }
         self.pictures.retain(|_, p| p.bitmap.strong_count() > 0);
-        self.gpu_canvases.retain(|id, _| crate::canvas::alive(*id));
+        self.portables.retain();
+        let portables = &self.portables;
+        self.gpu_canvases
+            .retain(|id, _| crate::canvas::alive(*id) || portables.alive(*id));
         self.video.begin_frame(queue);
         self.paths.begin_frame();
         self.paths.prepare_many(device, &scene.primitives);

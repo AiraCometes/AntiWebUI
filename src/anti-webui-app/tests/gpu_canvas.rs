@@ -359,3 +359,77 @@ fn its_texture_goes_with_it() {
     f.next();
     assert_eq!(f.renderer.canvas_textures(), 0);
 }
+
+/// Fills all of a portable canvas with one color, counting how often it is made and drawn.
+struct PortableFill;
+
+static PORTABLE_MADE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static PORTABLE_DRAWN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+impl GpuPaint for PortableFill {
+    type Props = Color;
+
+    fn new(_: &GpuInit<'_>) -> Self {
+        PORTABLE_MADE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        PortableFill
+    }
+
+    fn render(&mut self, c: &Color, frame: &mut GpuFrame<'_>) {
+        PORTABLE_DRAWN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        drop(frame.begin_pass(Some(color(*c))));
+    }
+}
+
+#[test]
+fn a_portable_canvas_is_drawn_by_whatever_draws_the_scene_on_any_thread() {
+    use anti_webui_wgpu::canvas::portable_canvas;
+    use std::sync::atomic::Ordering::Relaxed;
+    let gpu = match Gpu::headless() {
+        Ok(g) => g,
+        Err(e) => return eprintln!("skipping: {e}"),
+    };
+    let fill = signal(rgb(0x2060c0));
+    let mut ui = Ui::new(move || {
+        div()
+            .bg(Color::WHITE)
+            .h(pct(100.0))
+            .child(portable_canvas::<PortableFill>(move || fill.get()).w(50.0).h(40.0))
+    });
+    ui.handle_event(WindowEvent::Resized {
+        size: SizeI::new(100, 100),
+        scale: Scale::from_f64(1.0),
+    });
+    ui.update();
+    let first = std::sync::Arc::new(ui.paint(Instant::now()));
+    fill.set(rgb(0xc02060));
+    ui.update();
+    let second = std::sync::Arc::new(ui.paint(Instant::now()));
+
+    // Drawn on another thread, which never saw the document, by a renderer of its own; and the
+    // second scene by another renderer again, which makes what draws it for itself.
+    let (p1, p2, again) = std::thread::scope(|s| {
+        s.spawn(|| {
+            let mut r = Renderer::new(&gpu.device, wgpu::TextureFormat::Rgba8Unorm);
+            let p1 = gpu.render_to_rgba(&mut r, &first);
+            let p2 = gpu.render_to_rgba(&mut r, &second);
+            let made = PORTABLE_MADE.load(Relaxed);
+            let drawn = PORTABLE_DRAWN.load(Relaxed);
+            // The same scene again: nothing is drawn again.
+            let again = gpu.render_to_rgba(&mut r, &second);
+            assert_eq!(PORTABLE_DRAWN.load(Relaxed), drawn);
+            assert_eq!(made, 1, "one renderer makes it once");
+            assert_eq!(drawn, 2);
+            (p1, p2, again)
+        })
+        .join()
+        .unwrap()
+    });
+    assert_eq!(px(&p1, 100, 25, 20), [0x20, 0x60, 0xc0, 255]);
+    assert_eq!(px(&p1, 100, 75, 20), [255, 255, 255, 255], "beside it");
+    assert_eq!(px(&p2, 100, 25, 20), [0xc0, 0x20, 0x60, 255]);
+    assert_eq!(again, p2);
+
+    let mut other = Renderer::new(&gpu.device, wgpu::TextureFormat::Rgba8Unorm);
+    assert_eq!(gpu.render_to_rgba(&mut other, &second), p2);
+    assert_eq!(PORTABLE_MADE.load(Relaxed), 2);
+}

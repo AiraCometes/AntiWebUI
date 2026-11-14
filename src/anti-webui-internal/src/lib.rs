@@ -19,10 +19,13 @@ pub use anti_webui_widgets as widgets;
 
 pub use anti_webui_app::App;
 
-/// Drawing with wgpu in a box of the UI: [`gpu_canvas`](gpu::gpu_canvas). See
+/// Drawing with wgpu in a box of the UI: [`gpu_canvas`](gpu::gpu_canvas), and
+/// [`portable_canvas`](gpu::portable_canvas) for a scene drawn on another thread. See
 /// `docs/design/41-gpu-canvas.md`.
 pub mod gpu {
-    pub use anti_webui_wgpu::canvas::{GpuCanvas, GpuFrame, GpuInit, GpuPaint, gpu_canvas};
+    pub use anti_webui_wgpu::canvas::{
+        GpuCanvas, GpuFrame, GpuInit, GpuPaint, gpu_canvas, portable, portable_canvas,
+    };
     pub use anti_webui_wgpu::wgpu;
 }
 

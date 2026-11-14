@@ -116,6 +116,63 @@ core は wgpu を知らない（[05](05-rendering.md)）。core の `NodeKind::C
 
 テクスチャは箱 1 つにつき 1 枚（物理 px × 4 バイト。1000×600 で 2.4 MB）。ノードが消えると、次のフレームで捨てる。`content-visibility` で飛ばされている間も持ち続ける。
 
+## 持ち運べる canvas（`portable_canvas`）
+
+`gpu_canvas` の描き手は、文書を作ったスレッドのスレッドローカルの表に置かれる。文書を作ったスレッドとは別のスレッドで、別の renderer が `Scene` を描くと、描き手が見つからず何も描かれない。FrameScript2 はまさにそうしている。コンポジションは専用のスレッドで文書を作って塗り、`Scene` をプレビューの UI スレッドや書き出しのワーカー（それぞれ自分の device を持つ）へ渡して描かせる。
+
+持ち運べる canvas では、描き手ではなく「何から描くか」を `Scene` に載せる。描き手は `Scene` を描く renderer が自分の device で作り、canvas が消えるまで持つ。
+
+```rust
+use anti_webui::gpu::portable_canvas;
+
+// Props は Send + Sync + Clone。変わったときだけ新しいものが Scene に載る
+portable_canvas::<Spinner>(move || angle.get()).w(320.0).h(200.0)
+```
+
+ノードを直接作るとき（FrameScript2 はこちら）は次のようにする。
+
+```rust
+let data = CanvasData::portable(next_canvas_id(), portable::<Spinner>(0.0));
+// …変わったら
+canvas_data.set_paint(portable::<Spinner>(angle));   // version が進む
+doc.mark_shader_of(id);
+```
+
+- core の `CanvasData::portable` は `Portable { life: Arc<()>, paint: Arc<dyn Any + Send + Sync> }` を持つ。`CanvasDraw` にその複製が入るので、`Scene` は Send + Sync のままになる。core は中身を知らない。
+- `anti_webui_wgpu::canvas::portable::<T>(props)` が `paint` を作る。中身は型を消した「`T::new` と `T::render` と props」で、renderer はこれを自分の型として downcast して取り出す。
+- renderer は描き手を canvas の id ごとに持つ（`Portables`）。`T` の型か device が変わったら作り直す。`life` の `Weak` が切れたら（ノードも、それを載せた `Scene` も無くなったら）捨てる。テクスチャも同じ条件で捨てる。
+- 同じ `Scene` を 2 つの renderer が描けば、描き手はそれぞれに 1 つずつできる。どのスレッドで描いても同じになるので、書き出しを並列にできる。
+- 描き直すかどうかは、これまでどおり `version` で決まる。等しい props で `set_paint` を呼ぶと描き直しになるので、変わったときだけ呼ぶ。
+- エラーの扱い（専用の encoder、error scope、1 度だけ報告）は `gpu_canvas` と同じ。
+
+確認: `anti-webui-app/tests/gpu_canvas.rs` の `a_portable_canvas_is_drawn_by_whatever_draws_the_scene_on_any_thread`。UI スレッドで作った `Scene` を別のスレッドの renderer が描く。同じ `Scene` をもう一度描いても描き直さない。別の renderer は自分の描き手を作る。
+
+## 上に重ねた子のレイアウト
+
+`img`、`video`、`gpu_canvas` の上に重ねた子は、これまで箱の `display` にかかわらずブロックとして並んでいた。今は CSS と同じく箱の `display` に従う。`flex()` にすれば `items_center()` や `justify_center()` が効く。子が箱の大きさに口を出さないのは変わらない。
+
+確認: `anti-webui-core/tests/images.rs` の `what_lies_over_a_picture_is_laid_out_as_its_display_says`。
+
+## 画面の外のノード（`set_offscreen`）と `paint_node`
+
+ノードをレイアウトはするが、そこには見せず、別の場所に絵として使いたいことがある。FrameScript2 の `<Panel>` は、2D の要素を 3D の板に貼る。
+
+```rust
+with_doc(|d| d.set_offscreen(id, true));
+// …レイアウトの後で
+let (scene, rect) = with_doc(|d| paint::paint_node(d, id, now)).unwrap();
+// scene は文書の座標。rect がノードの箱。原点を -rect.x, -rect.y にずらした Layer で包めば、
+// 箱がテクスチャ全体になる
+```
+
+- `set_offscreen` されたノードは、ふだんどおりレイアウトされる（親のレイアウトにも、ふだんどおり加わる）。ただし文書の絵には、それも中身も出ない。`Painter::node_contents` が、`paint_node` の根でない offscreen のノードを飛ばす。
+- 周りのクリップを受けない。変形のあるノードと同じく `clip` を NONE にするので、中身のクリップもそのノードからのものだけになる。大きさ 0 で `overflow: hidden` の箱の中に置いても、切られずに塗れる。
+- スタッキングコンテキストになる。中の配置された要素も、そのノードの一覧から塗られる。これで、外の一覧から中身が塗られることは無い。
+- `paint_node` は、ドラッグのスナップショットと同じ塗り方で、ノードとその中身だけの Scene を作る。offscreen でないノードにも使える（その場合は周りのクリップが効いたまま）。
+- 当たり判定はまだ除外していない（FrameScript2 は入力を使わない）。
+
+確認: `anti-webui-core/tests/offscreen.rs`。大きさ 0 で中を隠す箱の中にある offscreen のノードとその中の配置された要素が、文書の絵に出ない。`paint_node` では、レイアウトどおりの大きさで、クリップ無しで塗られる。印を外すと元に戻る。
+
 ## `gpu_info`: 何が描いているか
 
 GL に落ちたか、ソフトウェアで描いているかを、アプリが知るための口。「GL なら重い効果を切る」「設定画面に使っている GPU を出す」に使う。これまでは `ANTIWEBUI_DEBUG_DAMAGE=1` のときに標準エラーへ出すだけだった。
