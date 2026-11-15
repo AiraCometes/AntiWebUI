@@ -11,11 +11,63 @@ use crate::typography::{FONT_FAMILY, TextStyle};
 use anti_webui::prelude::*;
 use std::rc::Rc;
 
-const HEIGHT: f32 = 56.0;
 const WIDTH: f32 = 280.0;
-const PAD: f32 = 16.0;
-const ICON_PAD: f32 = 4.0;
-const ICON_BOX: f32 = 48.0;
+
+/// The sizes of a text field of a density.
+#[derive(Clone, Copy)]
+struct Metrics {
+    /// Of one line.
+    height: f32,
+    /// Before and after the text, and above and below it in an outlined field.
+    pad: f32,
+    icon_pad: f32,
+    icon_box: f32,
+    /// Of the dropdown's arrow.
+    icon: f32,
+    text: TextStyle,
+    /// The size and line height of the label above the text.
+    small_label: (f32, f32),
+    /// Where the label above the text is in a filled field, and the space above and below the
+    /// text there.
+    filled: (f32, f32, f32),
+}
+
+impl Metrics {
+    fn now() -> Self {
+        if crate::density::compact() {
+            Metrics {
+                height: 36.0,
+                pad: 12.0,
+                icon_pad: 2.0,
+                icon_box: 32.0,
+                icon: 20.0,
+                text: TextStyle::COMPACT_BODY,
+                small_label: (11.0, 14.0),
+                filled: (6.0, 20.0, 6.0),
+            }
+        } else {
+            Metrics {
+                height: 56.0,
+                pad: 16.0,
+                icon_pad: 4.0,
+                icon_box: 48.0,
+                icon: 24.0,
+                text: TextStyle::BODY_LARGE,
+                small_label: (12.0, 16.0),
+                filled: (8.0, 24.0, 8.0),
+            }
+        }
+    }
+
+    /// Of a field: a filled one with a label has room for it above the text.
+    fn field_height(&self, outlined: bool, has_label: bool) -> f32 {
+        if outlined || !has_label {
+            self.height
+        } else {
+            self.filled.1 + self.text.line_height + self.filled.2
+        }
+    }
+}
 
 #[derive(ShaderParams, Clone, Copy)]
 struct OutlineField {
@@ -218,6 +270,7 @@ fn build(
     field_ref: Option<NodeRef>,
 ) -> Div {
     crate::ensure_ready();
+    let m = Metrics::now();
     let TextFieldStyle {
         label,
         placeholder,
@@ -310,19 +363,21 @@ fn build(
     );
 
     let start_space = if has_leading {
-        ICON_BOX + ICON_PAD
+        m.icon_box + m.icon_pad
     } else {
-        PAD
+        m.pad
     };
     let end_space = if has_trailing {
-        ICON_BOX + ICON_PAD
+        m.icon_box + m.icon_pad
     } else {
-        PAD
+        m.pad
     };
+    let height = m.field_height(outlined, has_label);
     let (input_top, input_bottom) = if outlined || !has_label {
-        (PAD, PAD)
+        let space = (m.height - m.text.line_height) / 2.0;
+        (space, space)
     } else {
-        (24.0, 8.0)
+        (m.filled.1, m.filled.2)
     };
 
     let mut input = if let Some(rows) = rows {
@@ -330,7 +385,7 @@ fn build(
     } else {
         text_input()
     };
-    input = TextStyle::BODY_LARGE.apply(input);
+    input = m.text.apply(input);
     let input_off = is_off.clone();
     let input_colors = colors.clone();
     let told = label.clone();
@@ -374,7 +429,7 @@ fn build(
         let side = colors.clone();
         move |line: String| {
             let side = side.clone();
-            TextStyle::BODY_LARGE
+            m.text
                 .apply(
                     div()
                         .flex_none()
@@ -402,7 +457,7 @@ fn build(
         .children(suffix.map(|p| row_text(p).ml(2.0)))
         .children(placeholder.map(|line| {
             let side = colors.clone();
-            TextStyle::BODY_LARGE
+            m.text
                 .apply(div().absolute().left(0.0).top(input_top).child(text(line)))
                 .pointer_events_none()
                 .dyn_style(move |s| {
@@ -422,19 +477,24 @@ fn build(
             .on_resized(move |w, _| label_width.set(w))
             .dyn_style(move |s| {
                 let p = floated.get();
-                let size = lerp(16.0, 12.0, p.clamp(0.0, 1.2));
-                let height = lerp(24.0, 16.0, p);
-                let start_y = (HEIGHT - 24.0) / 2.0;
-                let end_y = if outlined { -8.0 } else { 8.0 };
+                let (small, small_line) = m.small_label;
+                let size = lerp(m.text.size, small, p.clamp(0.0, 1.2));
+                let line = lerp(m.text.line_height, small_line, p);
+                let start_y = (height - m.text.line_height) / 2.0;
+                let end_y = if outlined {
+                    -small_line / 2.0
+                } else {
+                    m.filled.0
+                };
                 let start_x = start_space;
-                let end_x = if outlined { PAD } else { start_space };
+                let end_x = if outlined { m.pad } else { start_space };
                 let y = if multiline {
-                    lerp(if outlined { PAD } else { 16.0 }, end_y, p)
+                    lerp((m.height - m.text.line_height) / 2.0, end_y, p)
                 } else {
                     lerp(start_y, end_y, p)
                 };
                 s.text_size(size)
-                    .line_height(LineHeight::Px(height))
+                    .line_height(LineHeight::Px(line))
                     .letter_spacing(lerp(0.5, 0.4, p))
                     .left(lerp(start_x, end_x, p))
                     .top(y)
@@ -451,7 +511,7 @@ fn build(
         .flex_none()
         .items_stretch()
         .w_full()
-        .min_h(HEIGHT)
+        .min_h(height)
         .cursor(CursorIcon::Text)
         .dyn_style(move |s| {
             let s = if outlined {
@@ -471,7 +531,7 @@ fn build(
             .absolute()
             .top(0.0)
             .bottom(0.0)
-            .w(ICON_BOX)
+            .w(m.icon_box)
             .flex()
             .items_center()
             .justify_center()
@@ -480,9 +540,9 @@ fn build(
             .child(view);
         let style = slot.style_mut();
         if left {
-            style.inset_left = Some(Length::Px(ICON_PAD));
+            style.inset_left = Some(Length::Px(m.icon_pad));
         } else {
-            style.inset_right = Some(Length::Px(ICON_PAD));
+            style.inset_right = Some(Length::Px(m.icon_pad));
         }
         slot
     };
@@ -497,7 +557,7 @@ fn build(
             let p = floated.get().max(0.0);
             let w = label_width.get() * p;
             let (notch_start, notch_end) = if has_label && p > 0.0 {
-                (PAD - 4.0, PAD + w + 4.0)
+                (m.pad - 4.0, m.pad + w + 4.0)
             } else {
                 (0.0, 0.0)
             };
@@ -523,7 +583,7 @@ fn build(
     let below = supporting.map(|line| {
         let side = colors.clone();
         TextStyle::BODY_SMALL
-            .apply(div().px(PAD).pt(4.0).child(text(move || line())))
+            .apply(div().px(m.pad).pt(4.0).child(text(move || line())))
             .dyn_style(move |s| s.text_color(side().supporting))
     });
     div()
@@ -564,7 +624,7 @@ pub fn dropdown_field(
     let style = TextFieldStyle {
         read_only: true,
         trailing: Some(
-            sized_icon(icons::ARROW_DROP_DOWN, 24.0)
+            sized_icon(icons::ARROW_DROP_DOWN, Metrics::now().icon)
                 .dyn_style(move |s| s.rotate(turn.get()))
                 .into_view(),
         ),

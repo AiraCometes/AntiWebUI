@@ -40,6 +40,9 @@ struct Metrics {
 
 impl ButtonSize {
     fn metrics(self) -> Metrics {
+        if crate::density::compact() {
+            return self.compact_metrics();
+        }
         let (height, padding, square_radius, pressed_radius, outline, text, icon, icon_gap) =
             match self {
                 ButtonSize::ExtraSmall => (
@@ -104,6 +107,73 @@ impl ButtonSize {
             icon_gap,
         }
     }
+
+    /// From 28 for the smallest, where the standard sizes start at 32.
+    fn compact_metrics(self) -> Metrics {
+        let (height, padding, square_radius, pressed_radius, outline, text, icon, icon_gap) =
+            match self {
+                ButtonSize::ExtraSmall => (
+                    28.0,
+                    12.0,
+                    8.0,
+                    6.0,
+                    1.0,
+                    TextStyle::LABEL_MEDIUM,
+                    16.0,
+                    4.0,
+                ),
+                ButtonSize::Small => (
+                    32.0,
+                    14.0,
+                    8.0,
+                    6.0,
+                    1.0,
+                    TextStyle::COMPACT_LABEL,
+                    18.0,
+                    6.0,
+                ),
+                ButtonSize::Medium => (
+                    40.0,
+                    18.0,
+                    12.0,
+                    8.0,
+                    1.0,
+                    TextStyle::TITLE_SMALL,
+                    20.0,
+                    8.0,
+                ),
+                ButtonSize::Large => (
+                    56.0,
+                    28.0,
+                    16.0,
+                    12.0,
+                    1.0,
+                    TextStyle::TITLE_LARGE,
+                    24.0,
+                    8.0,
+                ),
+                ButtonSize::ExtraLarge => (
+                    80.0,
+                    40.0,
+                    20.0,
+                    12.0,
+                    2.0,
+                    TextStyle::HEADLINE_SMALL,
+                    32.0,
+                    12.0,
+                ),
+            };
+        Metrics {
+            height,
+            padding,
+            square_radius,
+            pressed_radius,
+            outline,
+            text,
+            icon,
+            icon_gap,
+        }
+    }
 }
 
 /// How a button looks.
@@ -128,15 +198,21 @@ pub(super) enum Joined {
 }
 
 impl Joined {
-    /// The shapes at rest, pressed and checked. The tokens are only there for the small size.
+    /// The shapes at rest, pressed and checked. The tokens are only there for the small size, and
+    /// the compact one has them in proportion.
     fn shapes(self, full: f32) -> (Corners, Corners, Corners) {
+        let (inner, pressed) = if crate::density::compact() {
+            (6.0, 3.0)
+        } else {
+            (8.0, 4.0)
+        };
         let sides = |inner: f32| match self {
             Joined::Alone => [full; 4],
             Joined::First => [full, inner, inner, full],
             Joined::Middle => [inner; 4],
             Joined::Last => [inner, full, full, inner],
         };
-        (sides(8.0), sides(4.0), [full; 4])
+        (sides(inner), sides(pressed), [full; 4])
     }
 }
 

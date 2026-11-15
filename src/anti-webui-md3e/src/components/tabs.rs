@@ -81,7 +81,12 @@ fn look(labels: Vec<Tab>, state: TabsState, style: TabsStyle) -> Div {
     } = style;
     let count = labels.len().max(1);
     let tall = labels.iter().any(|t| t.icon.is_some() && t.label.is_some());
-    let height = if tall { 72.0 } else { 48.0 };
+    let height = match (tall, crate::density::compact()) {
+        (true, false) => 72.0,
+        (false, false) => 48.0,
+        (true, true) => 52.0,
+        (false, true) => 36.0,
+    };
     let selected: Rc<dyn Fn() -> usize> = Rc::new(move || state.selected());
     let row_width = signal(0.0f32);
     let tab_widths: Vec<Signal<f32>> = (0..count).map(|_| signal(0.0)).collect();
@@ -221,6 +226,11 @@ fn one_tab(
     height: f32,
     content_width: Signal<f32>,
 ) -> Div {
+    let (icon, label_style) = if crate::density::compact() {
+        (20.0, TextStyle::COMPACT_LABEL)
+    } else {
+        (24.0, TextStyle::TITLE_SMALL)
+    };
     let colored = on.clone();
     let wanted = move || {
         let c = color_scheme();
@@ -266,11 +276,8 @@ fn one_tab(
         .items_center()
         .gap(if tab.icon.is_some() { 2.0 } else { 0.0 })
         .on_resized(move |w, _| content_width.set(w))
-        .children(tab.icon.map(|symbol| filling_icon(symbol, 24.0, Some(on))))
-        .children(
-            tab.label
-                .map(|label| TextStyle::TITLE_SMALL.apply(text(label))),
-        );
+        .children(tab.icon.map(|symbol| filling_icon(symbol, icon, Some(on))))
+        .children(tab.label.map(|label| label_style.apply(text(label))));
     ink.paint(
         ink.listen(
             div()

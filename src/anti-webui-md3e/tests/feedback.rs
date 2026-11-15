@@ -8,7 +8,7 @@ use anti_webui::prelude::*;
 use anti_webui_md3e::components::{
     RichTooltip, Snackbar, badge, badged, circular_progress, circular_wavy_progress,
     indeterminate_circular_progress, indeterminate_linear_progress, indeterminate_wavy_progress,
-    linear_progress, rich_tooltip, snackbars, text_badge, tooltip,
+    linear_progress, rich_tooltip, snackbars, text_badge, tooltip, wavy_progress,
 };
 use common::*;
 use std::time::Duration;
@@ -38,6 +38,24 @@ fn a_changed_progress_moves_there_and_rests_again() {
     ui.update();
     assert!(ui.animating());
     assert_at_rest(&mut ui);
+}
+
+#[test]
+fn what_builds_a_progress_bar_is_not_built_again_when_the_progress_changes() {
+    let value = signal(0.2f32);
+    let built = signal(0);
+    let mut ui = start_ui(move || {
+        div().child(dyn_view(move || {
+            built.update(|b| *b += 1);
+            div()
+                .child(wavy_progress(move || value.get()))
+                .child(linear_progress(move || value.get()))
+        }))
+    });
+    settle(&mut ui);
+    value.set(0.6);
+    settle(&mut ui);
+    assert_eq!(built.get_untracked(), 1);
 }
 
 #[test]

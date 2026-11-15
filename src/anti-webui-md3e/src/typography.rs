@@ -30,6 +30,11 @@ impl TextStyle {
     pub const LABEL_LARGE: Self = Self::new(14.0, 20.0, 0.1, 500);
     pub const LABEL_MEDIUM: Self = Self::new(12.0, 16.0, 0.5, 500);
     pub const LABEL_SMALL: Self = Self::new(11.0, 16.0, 0.5, 500);
+    /// Not of the scale: between the medium and large labels, for compact components
+    /// (`Density::Compact`).
+    pub const COMPACT_LABEL: Self = Self::new(13.0, 18.0, 0.1, 500);
+    /// The same between the small and medium bodies, for what is typed or chosen in them.
+    pub const COMPACT_BODY: Self = Self::new(13.0, 18.0, 0.2, 400);
 
     const fn new(size: f32, line_height: f32, letter_spacing: f32, weight: u16) -> Self {
         Self {

@@ -10,11 +10,48 @@ use anti_webui::prelude::*;
 use std::cell::Cell;
 use std::rc::Rc;
 
-const WIDTH: f32 = 52.0;
-const HEIGHT: f32 = 32.0;
-const TOUCH: f32 = 48.0;
-const OUTLINE: f32 = 2.0;
-const HALO: f32 = 40.0;
+/// The sizes of a switch of a density.
+#[derive(Clone, Copy)]
+struct Metrics {
+    width: f32,
+    height: f32,
+    touch: f32,
+    outline: f32,
+    halo: f32,
+    icon: f32,
+    /// Of the handle: off without an icon, otherwise, and pressed.
+    handles: (f32, f32, f32),
+    /// Between the handle and the end of the track, at rest and pressed.
+    ends: (f32, f32),
+}
+
+impl Metrics {
+    fn now() -> Self {
+        if crate::density::compact() {
+            Metrics {
+                width: 40.0,
+                height: 24.0,
+                touch: 28.0,
+                outline: 1.5,
+                halo: 32.0,
+                icon: 12.0,
+                handles: (12.0, 16.0, 20.0),
+                ends: (4.0, 2.0),
+            }
+        } else {
+            Metrics {
+                width: 52.0,
+                height: 32.0,
+                touch: 48.0,
+                outline: 2.0,
+                halo: 40.0,
+                icon: 16.0,
+                handles: (16.0, 24.0, 28.0),
+                ends: (4.0, 2.0),
+            }
+        }
+    }
+}
 
 /// How a switch looks.
 #[derive(Clone, Default)]
@@ -49,19 +86,21 @@ impl SwitchStyle {
 }
 
 /// How big the handle is and where its left edge is, measured from the outside of the track.
-fn handle(checked: bool, pressed: bool, has_icon: bool) -> (f32, f32) {
+fn handle(m: &Metrics, checked: bool, pressed: bool, has_icon: bool) -> (f32, f32) {
+    let (small, usual, held) = m.handles;
     let size = if pressed {
-        28.0
+        held
     } else if has_icon || checked {
-        24.0
+        usual
     } else {
-        16.0
+        small
     };
+    let (rest, pressed_end) = m.ends;
     let x = match (pressed, checked) {
-        (true, true) => 22.0,
-        (true, false) => 2.0,
-        (false, true) => 24.0,
-        (false, false) => (HEIGHT - size) / 2.0,
+        (true, true) => m.width - pressed_end - size,
+        (true, false) => pressed_end,
+        (false, true) => m.width - rest - size,
+        (false, false) => (m.height - size) / 2.0,
     };
     (size, x)
 }
@@ -77,6 +116,16 @@ pub fn styled_switch(on: impl Into<Binding<bool>>, style: SwitchStyle) -> Div {
 }
 
 fn look(state: SwitchState, style: SwitchStyle) -> Div {
+    let m = Metrics::now();
+    let Metrics {
+        width,
+        height,
+        touch,
+        outline,
+        halo: halo_size,
+        icon,
+        ..
+    } = m;
     let checked: When = Rc::new(move || state.on());
     let SwitchStyle {
         on_icon,
@@ -107,7 +156,7 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
         } else {
             off_icon.is_some()
         };
-        handle(on, pressed.get(), has_icon)
+        handle(&m, on, pressed.get(), has_icon)
     };
     let (size_at_start, x_at_start) = untrack(&wanted);
     let size = animated(size_at_start);
@@ -136,7 +185,7 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
     let mark =
         move |symbol: Option<&'static Symbol>, shown_when_on: bool, checked: When, off: When| {
             symbol.map(move |symbol| {
-                sized_icon(symbol, 16.0)
+                sized_icon(symbol, icon)
                     .absolute()
                     .transition_of([Prop::Opacity], Transition::ms(100).ease_out())
                     .dyn_style(move |s| {
@@ -148,7 +197,7 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
                             (true, true) => c.on_surface.with_alpha(0.38),
                             (true, false) => c.surface_container_highest.with_alpha(0.38),
                         };
-                        let inset = (size.get() - 16.0) / 2.0;
+                        let inset = (size.get() - icon) / 2.0;
                         let s = s.text_color(color).left(inset).top(inset);
                         if on == shown_when_on {
                             s
@@ -163,10 +212,10 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
 
     let track = div()
         .relative()
-        .w(WIDTH)
-        .h(HEIGHT)
-        .rounded(HEIGHT / 2.0)
-        .border(OUTLINE)
+        .w(width)
+        .h(height)
+        .rounded(height / 2.0)
+        .border(outline)
         .transition_of(
             [Prop::Background, Prop::BorderColor],
             Transition::ms(100).ease_out(),
@@ -188,10 +237,10 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
             };
             focus_ring(s.bg(background).border_color(border), focused.get(), &c)
         })
-        .child(halo(&ink, HALO).dyn_style(move |s| {
+        .child(halo(&ink, halo_size).dyn_style(move |s| {
             // The inside of the border is where this is measured from.
-            s.left(x.get() + size.get() / 2.0 - HALO / 2.0 - OUTLINE)
-                .top(HEIGHT / 2.0 - HALO / 2.0 - OUTLINE)
+            s.left(x.get() + size.get() / 2.0 - halo_size / 2.0 - outline)
+                .top(height / 2.0 - halo_size / 2.0 - outline)
         }))
         .child(
             div()
@@ -210,8 +259,8 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
                         (true, false) => mix_premultiplied(c.surface, c.on_surface, 0.38),
                     };
                     let (size, x) = (size.get(), x.get());
-                    s.left(x - OUTLINE)
-                        .top((HEIGHT - size) / 2.0 - OUTLINE)
+                    s.left(x - outline)
+                        .top((height - size) / 2.0 - outline)
                         .w(size)
                         .h(size)
                         .rounded(size / 2.0)
@@ -226,8 +275,8 @@ fn look(state: SwitchState, style: SwitchStyle) -> Div {
             .flex()
             .flex_none()
             .items_center()
-            .w(WIDTH)
-            .h(TOUCH)
+            .w(width)
+            .h(touch)
             .dyn_style(move |s| {
                 s.cursor(if root_off() {
                     CursorIcon::Default

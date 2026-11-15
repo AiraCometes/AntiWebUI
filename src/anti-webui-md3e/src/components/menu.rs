@@ -167,6 +167,42 @@ pub fn styled_menu(
     })
 }
 
+/// The sizes of a menu of a density.
+#[derive(Clone, Copy)]
+struct Metrics {
+    item_height: f32,
+    item_pad: f32,
+    icon: f32,
+    label: TextStyle,
+    /// The outer and inner corners of a group, and of an item.
+    group_corners: (f32, f32),
+    item_corners: (f32, f32),
+}
+
+impl Metrics {
+    fn now() -> Self {
+        if crate::density::compact() {
+            Metrics {
+                item_height: 32.0,
+                item_pad: 12.0,
+                icon: 18.0,
+                label: TextStyle::COMPACT_LABEL,
+                group_corners: (10.0, 6.0),
+                item_corners: (8.0, 3.0),
+            }
+        } else {
+            Metrics {
+                item_height: 44.0,
+                item_pad: 12.0,
+                icon: 20.0,
+                label: TextStyle::LABEL_LARGE,
+                group_corners: (16.0, 8.0),
+                item_corners: (12.0, 4.0),
+            }
+        }
+    }
+}
+
 /// What builds the groups of a menu or a submenu each time it opens, growing from `origin`.
 fn body(
     m: MenuState,
@@ -218,10 +254,12 @@ fn group(
     vibrant: bool,
     next: Rc<Cell<usize>>,
 ) -> Div {
+    let sizes = Metrics::now();
+    let (outer, inner) = sizes.group_corners;
     let [a, b, c, d] = if count <= 1 {
-        round(16.0)
+        round(outer)
     } else {
-        place_corners(i, count, 16.0, 8.0)
+        place_corners(i, count, outer, inner)
     };
     let total = items.len();
     let mut node = div()
@@ -246,7 +284,8 @@ fn group(
                 .map(|(j, item)| {
                     let at = next.get();
                     next.set(at + 1);
-                    item_view(m, item, place_corners(j, total, 12.0, 4.0), vibrant, at)
+                    let (outer, inner) = sizes.item_corners;
+                    item_view(m, item, place_corners(j, total, outer, inner), vibrant, at)
                 })
                 .collect::<Vec<_>>(),
         );
@@ -270,6 +309,7 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
         on_click,
         submenu,
     } = item;
+    let size = Metrics::now();
     let selects = selected.is_some();
     // A row that opens a submenu is selected while it is open, and never has a check.
     let opens = submenu.is_some() && disabled.is_none();
@@ -318,7 +358,13 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
     let side = content.clone();
     let layer = content;
     let shape_on = is_on.clone();
-    let wanted = move || if shape_on() { round(12.0) } else { corners };
+    let wanted = move || {
+        if shape_on() {
+            round(size.item_corners.0)
+        } else {
+            corners
+        }
+    };
     let first = untrack(&wanted);
     let radii = first.map(animated);
     let last = Cell::new(first);
@@ -339,7 +385,7 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
 
     let lead = match icon {
         Some(symbol) => Some(
-            sized_icon(symbol, 20.0)
+            sized_icon(symbol, size.icon)
                 .mr(8.0)
                 .dyn_style(move |s| s.text_color(side().1)),
         ),
@@ -351,16 +397,16 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
             Some(
                 div()
                     .flex_none()
-                    .h(20.0)
+                    .h(size.icon)
                     .overflow_hidden()
                     .dyn_style(move |s| {
                         let v = t.get().max(0.0);
-                        s.w(20.0 * v)
+                        s.w(size.icon * v)
                             .mr(8.0 * v)
                             .opacity(fade.get().clamp(0.0, 1.0))
                             .text_color(color().1)
                     })
-                    .child(sized_icon(icons::CHECK, 20.0)),
+                    .child(sized_icon(icons::CHECK, size.icon)),
             )
         }
         None => None,
@@ -382,9 +428,9 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
                 .flex_row()
                 .items_center()
                 .mx(4.0)
-                .min_h(44.0)
+                .min_h(size.item_height)
                 .max_w(280.0)
-                .px(12.0)
+                .px(size.item_pad)
                 .py(if supporting.is_some() { 6.0 } else { 0.0 })
                 .select_none()
                 .dyn_style(move |s| {
@@ -409,17 +455,14 @@ fn item_view(m: MenuState, item: MenuItem, corners: Corners, vibrant: bool, at: 
                         .flex()
                         .flex_col()
                         .flex_grow(1.0)
-                        .child(TextStyle::LABEL_LARGE.apply(div().child(text(label))))
+                        .child(size.label.apply(div().child(text(label))))
                         .children(
                             supporting
                                 .map(|line| TextStyle::BODY_MEDIUM.apply(div().child(text(line)))),
                         ),
                 )
-                .children(
-                    trailing
-                        .map(|line| TextStyle::LABEL_LARGE.apply(div().ml(12.0).child(text(line)))),
-                )
-                .children(trailing_icon.map(|symbol| sized_icon(symbol, 20.0).ml(8.0))),
+                .children(trailing.map(|line| size.label.apply(div().ml(12.0).child(text(line)))))
+                .children(trailing_icon.map(|symbol| sized_icon(symbol, size.icon).ml(8.0))),
         ),
     );
     match submenu {

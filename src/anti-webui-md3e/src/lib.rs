@@ -14,6 +14,7 @@
 
 pub mod color;
 pub mod components;
+mod density;
 pub mod dynamic;
 pub mod motion;
 mod shapes;
@@ -24,6 +25,7 @@ pub use color::{
     ColorScheme, SchemeOptions, SchemeVariant, color_scheme, set_color_scheme,
     set_color_scheme_animated,
 };
+pub use density::{Density, density, set_density};
 
 use std::cell::Cell;
 

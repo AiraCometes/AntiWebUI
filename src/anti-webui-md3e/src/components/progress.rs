@@ -91,7 +91,8 @@ pub fn wavy_progress(progress: impl Fn() -> f32 + 'static) -> Div {
 /// even pace: a short one for a value that changes often or is dragged, like a seek bar's.
 pub fn wavy_progress_eased(progress: impl Fn() -> f32 + 'static, timing: Transition) -> Div {
     crate::ensure_ready();
-    let first = progress().clamp(0.0, 1.0);
+    // Untracked, or whatever builds it would be built again each time the progress changes.
+    let first = untrack(&progress).clamp(0.0, 1.0);
     let value = animated(first);
     let wave = animated(if waves_at(first) { 1.0f32 } else { 0.0 });
     let phase = signal(0.0f32);

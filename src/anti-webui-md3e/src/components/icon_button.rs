@@ -37,7 +37,12 @@ struct Metrics {
 }
 
 fn metrics(size: ButtonSize) -> Metrics {
+    let compact = crate::density::compact();
     let (height, icon, padding, square_radius, pressed_radius, outline) = match size {
+        // As high as the compact buttons.
+        ButtonSize::ExtraSmall if compact => (28.0, 18.0, [3.0, 5.0, 8.0], 8.0, 6.0, 1.0),
+        ButtonSize::Small if compact => (32.0, 20.0, [4.0, 6.0, 10.0], 8.0, 6.0, 1.0),
+        ButtonSize::Medium if compact => (40.0, 24.0, [8.0, 10.0, 16.0], 12.0, 8.0, 1.0),
         ButtonSize::ExtraSmall => (32.0, 20.0, [4.0, 6.0, 10.0], 12.0, 8.0, 1.0),
         ButtonSize::Small => (40.0, 24.0, [4.0, 8.0, 14.0], 12.0, 8.0, 1.0),
         ButtonSize::Medium => (56.0, 24.0, [12.0, 16.0, 24.0], 16.0, 12.0, 1.0),

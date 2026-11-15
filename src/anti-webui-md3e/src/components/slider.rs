@@ -13,7 +13,6 @@ use std::ops::RangeInclusive;
 use std::rc::Rc;
 use std::time::Instant;
 
-const TOUCH: f32 = 48.0;
 const LENGTH: f32 = 240.0;
 const HANDLE: f32 = 4.0;
 const HANDLE_NARROW: f32 = 2.0;
@@ -67,6 +66,10 @@ pub struct SliderStyle {
     corner: Option<f32>,
     handle_height: f32,
     gap: f32,
+    /// How deep the box is across the track: where the pointer reaches it.
+    touch: f32,
+    /// Of the dots at the end and the ticks.
+    stop: f32,
     stops: bool,
     centered: bool,
     vertical: bool,
@@ -84,14 +87,22 @@ struct Wave {
 }
 
 impl Default for SliderStyle {
+    /// In the sizes of the density at the time (`Density::Compact` has a thin track).
     fn default() -> Self {
+        let (track, handle_height, gap, touch, stop) = if crate::density::compact() {
+            (6.0, 24.0, 4.0, 28.0, 2.0)
+        } else {
+            (16.0, 44.0, 6.0, 48.0, 4.0)
+        };
         Self {
             range: 0.0..=1.0,
             steps: 0,
-            track: 16.0,
+            track,
             corner: None,
-            handle_height: 44.0,
-            gap: 6.0,
+            handle_height,
+            gap,
+            touch,
+            stop,
             stops: true,
             centered: false,
             vertical: false,
@@ -252,6 +263,8 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
         corner,
         handle_height,
         gap,
+        touch,
+        stop,
         stops,
         centered,
         vertical,
@@ -259,6 +272,11 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
         disabled,
         wave,
     } = style;
+    let bubble_height = if crate::density::compact() {
+        20.0
+    } else {
+        24.0
+    };
     let two = state.count() == 2;
     let disabled = when(disabled);
     let corner = corner.unwrap_or(track / 2.0);
@@ -345,7 +363,7 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
                         div()
                             .flex_none()
                             .min_w(40.0)
-                            .h(24.0)
+                            .h(bubble_height)
                             .px(8.0)
                             .flex()
                             .items_center()
@@ -379,7 +397,7 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
             .rounded(HANDLE / 2.0)
             .dyn_style(move |s| {
                 let t = fraction.get();
-                let across = (TOUCH - handle_height) / 2.0;
+                let across = (touch - handle_height) / 2.0;
                 // The track starts and ends half a handle in from the box.
                 let s = if vertical {
                     s.w(handle_height)
@@ -409,9 +427,9 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
     };
     let root = div().relative().flex_none().cursor(CursorIcon::Pointer);
     let root = if vertical {
-        root.w(TOUCH).h(LENGTH)
+        root.w(touch).h(LENGTH)
     } else {
-        root.w(LENGTH).h(TOUCH)
+        root.w(LENGTH).h(touch)
     };
     let cursor_off = paint_off.clone();
     let root_off = paint_off.clone();
@@ -461,7 +479,7 @@ fn look(state: SliderState, style: SliderStyle) -> Div {
                 track,
                 corner,
                 gap,
-                stop: 4.0,
+                stop,
                 steps: steps as f32,
                 stops: if stops { 1.0 } else { 0.0 },
                 vertical: if vertical { 1.0 } else { 0.0 },
