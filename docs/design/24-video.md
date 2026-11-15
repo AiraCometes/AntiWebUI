@@ -48,9 +48,20 @@ update_settings(|s| s.video.libraries = VideoLibraries::LgplOnly);
 
 動画を使わないアプリは何も読み込まない。最初の動画が開かれるときに、動画のスレッドで次の順に探す。
 
-1. `settings.video.library_dir`、または実行ファイルの隣（`<exe>/ffmpeg/`）にある `.so`
+1. `settings.video.library_dir`、または実行ファイルの隣（`<exe>/ffmpeg/`）にあるライブラリ
 2. システムの FFmpeg（`VideoLibraries::LgplOnly` でも読むが、LGPL でなければ使わない）
-3. どちらも無ければ `VideoError::Unavailable`
+3. macOS では、システムが探さないパッケージマネージャの場所（`/opt/homebrew/lib`、MacPorts の `/opt/local/lib`）。Intel の Mac の Homebrew は `/usr/local/lib` で、2 で見つかる
+4. どれにも無ければ `VideoError::Unavailable`
+
+ファイル名は FFmpeg 自身のビルドが付ける名前で、OS ごとに違う。
+
+| OS | 例（avcodec 63） |
+|---|---|
+| Linux など | `libavcodec.so.63` |
+| macOS | `libavcodec.63.dylib` |
+| Windows | `avcodec-63.dll` |
+
+Windows では、1 の場所のものは `LOAD_WITH_ALTERED_SEARCH_PATH` で読む。avcodec が要る avutil などを、システムの探す場所ではなく、同じ場所から読ませるためである。2 は普通に読むので、`PATH` の上にあれば見つかる。
 
 普通の動的リンクだと、無いときに `main` の前でプロセスが起動に失敗する。実行時に読み込むのでそれが起きない。
 
@@ -64,6 +75,8 @@ FFmpeg の ABI はメジャーバージョンごとに変わる。バージョ�
 
 オフセットの表は `src/anti-webui-video/tools/offsets.c` を各バージョンのヘッダでコンパイルして得た数値である。起動時に `avcodec_version()` などの実行時の値で行を選ぶ。
 
+OS が違っても表は同じものを使う。`tools/offsets-targets.sh` が clang で、Linux x86_64、Windows（mingw と MSVC）、macOS（arm64 と x86_64）向けに同じヘッダから数字を出す。FFmpeg 9 では 5 つとも同じだった。使う構造体のフィールドが `int`、`int64_t`、ポインタ、`size_t`、列挙だけで、`long`（Windows だけ 4 バイト）を含まないためである。
+
 ピクセル形式の値は `av_get_pix_fmt("vaapi")` のように実行時に名前で引く。
 
 ## 構成
@@ -72,6 +85,7 @@ FFmpeg の ABI はメジャーバージョンごとに変わる。バージョ�
 anti-webui-core            video() 要素、VideoPlayer、VideoBackend トレイト、VideoFrame、Primitive::Video
                            （FFmpeg を知らない。バックエンドが無ければ Unavailable）
 anti-webui-video           VideoBackend の実装。FFmpeg と ALSA を dlopen、分離、デコード、音声、時刻合わせ
+                           （音声は Windows で WASAPI、macOS で Audio Queue Services）
                            （機能 video で有効。結線は anti-webui-app）
 anti-webui-wgpu            VideoFrame の描画。メモリの画素の転送と dmabuf の取り込み
 ```
@@ -84,7 +98,7 @@ anti-webui-wgpu            VideoFrame の描画。メモリの画素の転送と
 
 ```
 分離スレッド ──→ 映像の packet ─→ 映像スレッド ─→ フレーム（4 枚まで） ─→ UI スレッドが時刻で選ぶ ─→ 描画
-           └──→ 音声の packet ─→ 音声スレッド ─→ ALSA
+           └──→ 音声の packet ─→ 音声スレッド ─→ ALSA / WASAPI / Audio Queue
                                                  └─ 再生位置が全体の時計
 ```
 
@@ -275,15 +289,26 @@ while let Some(c) = reader.next_chunk()? { /* c.start 秒からの (左, 右) �
 - 時刻の原点は、映像があれば映像のストリームの開始時刻（`VideoReader` と同じ）、無ければ音のストリームの開始時刻。同じファイルの絵と音がずれない。
 - 各塊の `start` は前の塊の終わりから数える。ファイルの時刻が 20 ms 以上ずれたときだけそちらを信じる（丸めで隙間や重なりを作らない）。
 - `seek` の後、最初の塊は目的の時刻より後から始まることがある。正確な位置が要るアプリはさらに手前へ移動する（FrameScript2 がそうしている）。
-- 出力先（ALSA）は `AudioOutput` として公開している（S16、2 ch）。
+- 出力先は `AudioOutput` として公開している（S16、2 ch。OS ごとの中身は「音声」）。
 
 ## 音声
 
-ALSA（`libasound.so.2`）を `dlopen` で読む。PipeWire の環境でも `pipewire-alsa` を通して動く。Rust の音声クレートは `libasound` にリンクするので、無い環境で起動できなくなるため使わない。
+OS ごとに、その OS に必ずあるものを使う。`AudioOutput` の振る舞いはどれも ALSA に合わせてある（書き込みは空きを待つ、`delay` はまだ聞こえていない分、書けば自分で始まる、`flush` で捨てる、`pause` で止める）。
+
+| OS | 使うもの | 読み方 | `delay` |
+|---|---|---|---|
+| Linux など | ALSA（`libasound.so.2`） | `dlopen` | `snd_pcm_delay` |
+| Windows | WASAPI（共有モード） | リンク（`windows` クレート） | `GetCurrentPadding` + `GetStreamLatency` |
+| macOS | Audio Queue Services | リンク（AudioToolbox） | 戻ってきていないバッファの量 |
+
+- Linux では、PipeWire の環境でも `pipewire-alsa` を通して動く。Rust の音声クレートは `libasound` にリンクするので、無い環境で起動できなくなるため使わない。WASAPI と AudioToolbox はどの Windows と macOS にもあるので、リンクしても同じことは起きない。
+- サンプルレートの変換は、Windows ではシステム（`AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM`）が、macOS ではキューがする。どちらも、デバイスのレートは変えない。
+- 溜める量はどれも 100 ms。macOS ではこれを 20 個のバッファに分ける。`delay` は戻ってきていないバッファの量なので、5 ms の単位でずれる。デバイスの遅れは足していない。
+- WASAPI は空きを 5 ms ごとに見る（イベントは使わない）。
 
 - 形式は `S16`、2 ch、元のサンプルレートで、`libswresample` で変換する。
 - 音量はこちらで掛ける。
-- 出力先が開けなければ音声なしで再生する（エラーにはしない）。`ANTIWEBUI_AUDIO_DEVICE` で出力先を指定できる（`none` で出さない）。
+- 出力先が開けなければ音声なしで再生する（エラーにはしない）。`ANTIWEBUI_AUDIO_DEVICE` で出力先を指定できる（`none` で出さない）。デバイスの名前は ALSA でだけ使い、Windows と macOS ではほかの名前は既定のデバイスになる。
 
 ## 対象外
 
@@ -305,7 +330,8 @@ ALSA（`libasound.so.2`）を `dlopen` で読む。PipeWire の環境でも `pip
 - NVIDIA。VA-API が無いので CPU デコードになるはず。後回しにしている。再開するときは **Vulkan Video（FFmpeg 経由）から実装する**（作者の希望）。追加の導入なしでゼロコピーを狙える唯一の方式である。`nvidia-vaapi-driver` と NVDEC（CUDA）でコピーする経路は、必要になったら検討する。
 - HTTP(S) の再生。
 - HDR の実機の見た目。トーンマップは PQ / HLG の式どおりだが、本物の HDR 動画で見ていない。
-- Windows / macOS。FFmpeg と ABI の扱いは同じ形で使えるはずだが、音声と取り込みは別に作る。
+- **Windows / macOS の実機。** FFmpeg の読み込みと音声は、Linux からのクロスでのコンパイルと clippy、オフセットの比較（`tools/offsets-targets.sh`）までで、実際に動かしていない。音声は書いたとおりに API を呼んでいるかが未確認である。
+- Windows / macOS の GPU デコード。VA-API だけなので CPU でデコードする。D3D11VA や VideoToolbox を足すなら、取り込まずに読み戻す経路（`av_hwframe_transfer_data`）がそのまま使える。
 
 ## 実測
 

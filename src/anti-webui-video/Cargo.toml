@@ -10,3 +10,13 @@ description = "Decodes videos for AntiWebUI with an FFmpeg found at run time, wh
 anti-webui-core.workspace = true
 libloading.workspace = true
 libc.workspace = true
+
+# Sound on Windows, through WASAPI. On macOS, AudioToolbox is linked to by name.
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = [
+    "Win32_Media_Audio",
+    "Win32_System_Com",
+    # For `IMMDevice::Activate`, whose parameters are a `PROPVARIANT`.
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Variant",
+] }

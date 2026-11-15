@@ -71,6 +71,8 @@ fn wait_for_event(
 }
 
 /// The luma of the middle of a frame, and of its red-difference chroma, in memory.
+// Without dmabufs, pictures are only ever in memory.
+#[cfg_attr(not(unix), allow(irrefutable_let_patterns))]
 fn middle(frame: &VideoFrame) -> (u8, u8) {
     let VideoPixels::Memory(planes) = &frame.pixels else {
         panic!("in memory")

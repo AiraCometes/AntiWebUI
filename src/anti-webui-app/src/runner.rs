@@ -648,6 +648,9 @@ macro_rules! platform_for {
             }
         }
 
+        // Each method calls the backend's own of the same name; one the backend lacks would be
+        // this one again, forever.
+        #[deny(unconditional_recursion)]
         impl Platform for $backend::Session {
             type Key = $backend::WindowKey;
             type Share = $backend::SessionShare;

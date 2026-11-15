@@ -622,6 +622,19 @@ impl Session {
             .collect()
     }
 
+    pub fn request_redraw(&mut self, key: WindowKey) {
+        if let Some(i) = self.instances.iter_mut().find(|i| i.key == key) {
+            i.frames.redraw_requested = true;
+        }
+    }
+
+    pub fn redraw_pending(&self, key: WindowKey) -> bool {
+        self.instances
+            .iter()
+            .find(|i| i.key == key)
+            .is_some_and(|i| i.frames.redraw_requested)
+    }
+
     /// Hands every window what came for it, and draws those that are due. Doesn't wait.
     pub fn dispatch<M: Handlers>(&mut self, handlers: &mut M) -> Result<(), Error> {
         autoreleasepool(|_| {

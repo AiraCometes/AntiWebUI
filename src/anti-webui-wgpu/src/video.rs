@@ -265,6 +265,8 @@ impl VideoPass {
         }
     }
 
+    // Without dmabufs, pictures are only ever in memory.
+    #[cfg_attr(not(unix), allow(irrefutable_let_patterns))]
     fn upload_memory(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, frame: &VideoFrame) {
         let VideoPixels::Memory(planes) = &frame.pixels else {
             return;

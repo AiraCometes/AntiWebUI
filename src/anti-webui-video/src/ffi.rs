@@ -18,6 +18,8 @@ pub const AVMEDIA_TYPE_VIDEO: c_int = 0;
 pub const AVMEDIA_TYPE_AUDIO: c_int = 1;
 pub const AV_PKT_DATA_DISPLAYMATRIX: c_int = 5;
 pub const AV_HWDEVICE_TYPE_VAAPI: c_int = 3;
+/// For dmabufs, which are only on Unix, as below.
+#[cfg_attr(not(unix), allow(dead_code))]
 pub const AV_HWFRAME_MAP_READ: c_int = 1;
 pub const AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX: c_int = 1;
 pub const AVSEEK_FLAG_BACKWARD: c_int = 1;
@@ -151,8 +153,9 @@ pub const LAYOUTS: &[Layout] = &[Layout {
 
 macro_rules! functions {
     ($($lib:ident { $($name:ident: fn($($arg:ty),*) $(-> $ret:ty)?;)* })*) => {
-        /// What is called, with the libraries it comes from.
+        /// What is called, with the libraries it comes from. `av_hwframe_map` is only for dmabufs.
         #[allow(non_snake_case)]
+        #[cfg_attr(not(unix), allow(dead_code))]
         pub struct Functions {
             $($(pub $name: unsafe extern "C" fn($($arg),*) $(-> $ret)?,)*)*
         }
@@ -256,6 +259,7 @@ pub struct HwConfig {
 }
 
 /// Mapped frames in dmabufs. The same in all versions this knows.
+#[cfg_attr(not(unix), allow(dead_code))]
 #[repr(C)]
 pub struct DrmObject {
     pub fd: c_int,
@@ -263,6 +267,7 @@ pub struct DrmObject {
     pub format_modifier: u64,
 }
 
+#[cfg_attr(not(unix), allow(dead_code))]
 #[repr(C)]
 pub struct DrmPlane {
     pub object_index: c_int,
@@ -270,6 +275,7 @@ pub struct DrmPlane {
     pub pitch: isize,
 }
 
+#[cfg_attr(not(unix), allow(dead_code))]
 #[repr(C)]
 pub struct DrmLayer {
     pub format: u32,
@@ -277,6 +283,7 @@ pub struct DrmLayer {
     pub planes: [DrmPlane; 4],
 }
 
+#[cfg_attr(not(unix), allow(dead_code))]
 #[repr(C)]
 pub struct DrmDescriptor {
     pub nb_objects: c_int,
@@ -315,6 +322,7 @@ pub struct Ffmpeg {
     /// What it says about itself.
     pub description: String,
     pub vaapi_pix_fmt: c_int,
+    #[cfg_attr(not(unix), allow(dead_code))]
     pub drm_prime_pix_fmt: c_int,
     pub nv12_pix_fmt: c_int,
     pub p010_pix_fmt: c_int,
@@ -336,20 +344,57 @@ pub fn license_allowed(libraries: VideoLibraries, license: &str) -> bool {
     }
 }
 
+/// What a library of FFmpeg of a major version is called here, as FFmpeg's own build names it.
 fn file_name(stem: &str, major: u32) -> String {
-    format!("lib{stem}.so.{major}")
+    if cfg!(windows) {
+        format!("{stem}-{major}.dll")
+    } else if cfg!(target_vendor = "apple") {
+        format!("lib{stem}.{major}.dylib")
+    } else {
+        format!("lib{stem}.so.{major}")
+    }
 }
 
 /// Opens a library of a known version, from `dir` if given, or from where the system looks.
 fn open(dir: Option<&Path>, stem: &str, major: u32) -> Option<Lib> {
     let name = file_name(stem, major);
     let path = match dir {
-        Some(dir) => dir.join(&name),
+        Some(dir) => std::path::absolute(dir.join(&name)).ok()?,
         None => PathBuf::from(&name),
     };
     // SAFETY: FFmpeg's libraries have no constructors that care about when they are loaded.
-    let library = unsafe { Library::new(&path) }.ok()?;
+    let library = unsafe { load_library(&path, dir.is_some()) }.ok()?;
     Some(Lib { name, library })
+}
+
+/// Loads a library. What it needs is looked for next to it when it is in a place of its own: on
+/// Windows, only where the system looks otherwise, which isn't there.
+///
+/// # Safety
+///
+/// As [`Library::new`].
+unsafe fn load_library(path: &Path, own_place: bool) -> Result<Library, libloading::Error> {
+    #[cfg(windows)]
+    if own_place {
+        use libloading::os::windows::{LOAD_WITH_ALTERED_SEARCH_PATH, Library as WindowsLibrary};
+        // SAFETY: see above.
+        return unsafe { WindowsLibrary::load_with_flags(path, LOAD_WITH_ALTERED_SEARCH_PATH) }
+            .map(Library::from);
+    }
+    let _ = own_place;
+    // SAFETY: see above.
+    unsafe { Library::new(path) }
+}
+
+/// Where an FFmpeg put in by a package manager is that the system doesn't look in by itself.
+fn package_dirs() -> &'static [&'static str] {
+    if cfg!(target_vendor = "apple") {
+        // Homebrew on Apple's processors, and MacPorts. Homebrew on Intel's is in /usr/local/lib,
+        // where the system looks.
+        &["/opt/homebrew/lib", "/opt/local/lib"]
+    } else {
+        &[]
+    }
 }
 
 fn version_of(lib: &Lib, function: &str) -> Result<u32, VideoError> {
@@ -454,7 +499,9 @@ fn own_dir(settings: &VideoSettings) -> Option<PathBuf> {
 
 fn load(settings: &VideoSettings) -> Result<Ffmpeg, VideoError> {
     let own = own_dir(settings);
-    load_from(&[own.as_deref(), None], settings.libraries)
+    let mut places = vec![own.as_deref(), None];
+    places.extend(package_dirs().iter().map(|dir| Some(Path::new(*dir))));
+    load_from(&places, settings.libraries)
 }
 
 /// Tries the places in turn, where `None` is where the system looks.
@@ -575,18 +622,32 @@ mod tests {
     fn what_isnt_a_library_is_nothing() {
         let dir = std::env::temp_dir().join(format!("anti-webui-junk-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        for stem in [
-            "avutil.so.61",
-            "swresample.so.7",
-            "swscale.so.10",
-            "avcodec.so.63",
-            "avformat.so.63",
+        let m = LAYOUTS[0].majors;
+        for (stem, major) in [
+            ("avutil", m.avutil),
+            ("swresample", m.swresample),
+            ("swscale", m.swscale),
+            ("avcodec", m.avcodec),
+            ("avformat", m.avformat),
         ] {
-            std::fs::write(dir.join(format!("lib{stem}")), b"not a library").unwrap();
+            std::fs::write(dir.join(file_name(stem, major)), b"not a library").unwrap();
         }
         let found = load_from(&[Some(dir.as_path())], VideoLibraries::Any);
         let _ = std::fs::remove_dir_all(&dir);
         assert!(matches!(found, Err(VideoError::Unavailable(_))));
+    }
+
+    /// The names FFmpeg's build gives them on each system.
+    #[test]
+    fn libraries_are_named_as_here() {
+        let name = file_name("avcodec", 63);
+        if cfg!(windows) {
+            assert_eq!(name, "avcodec-63.dll");
+        } else if cfg!(target_vendor = "apple") {
+            assert_eq!(name, "libavcodec.63.dylib");
+        } else {
+            assert_eq!(name, "libavcodec.so.63");
+        }
     }
 
     #[test]

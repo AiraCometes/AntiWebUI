@@ -21,6 +21,8 @@ fn open() -> Option<VideoReader> {
 }
 
 /// Which frame of `counting.mp4` this is, by its luma.
+// Without dmabufs, pictures are only ever in memory.
+#[cfg_attr(not(unix), allow(irrefutable_let_patterns))]
 fn number(frame: &DecodedFrame) -> i32 {
     let VideoPixels::Memory(planes) = &frame.frame.pixels else {
         panic!("in memory")
