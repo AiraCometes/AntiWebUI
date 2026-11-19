@@ -152,8 +152,9 @@ struct Shared {
     wifi: SharedSignal<Option<AccessPoint>>,
     access_points: SharedSignal<Vec<AccessPoint>>,
     wired: SharedSignal<Option<Wired>>,
-    /// The Wi-Fi device, and the saved connection of each SSID, for joining.
+    /// The Wi-Fi device that scans, joins and leaves: the connected one, or the first.
     wifi_device: Mutex<Option<String>>,
+    /// The saved connection of each SSID, for joining.
     saved: Mutex<HashMap<String, String>>,
 }
 
@@ -353,20 +354,28 @@ fn device_type(p: &Props) -> u32 {
 }
 
 impl Model {
+    /// The devices of `kind` that have been read, in NetworkManager's order rather than that of
+    /// their paths, where `Devices/10` comes before `Devices/2`.
+    fn devices_of(&self, kind: u32) -> impl Iterator<Item = (&String, &Props)> {
+        paths(&self.root, "Devices")
+            .into_iter()
+            .filter_map(|path| self.devices.get_key_value(&path))
+            .filter(move |(_, p)| device_type(p) == kind)
+    }
+
     fn wifi_devices(&self) -> impl Iterator<Item = (&String, &Props)> {
-        self.devices.iter().filter(|(_, p)| device_type(p) == WIFI)
+        self.devices_of(WIFI)
+    }
+
+    /// The first connected device of `kind`, or the first when none is.
+    fn device(&self, kind: u32) -> Option<(&String, &Props)> {
+        self.devices_of(kind)
+            .find(|(_, p)| get::<u32>(p, "State") == Some(ACTIVATED))
+            .or_else(|| self.devices_of(kind).next())
     }
 
     fn wired(&self) -> Option<Wired> {
-        let mut devices = self.devices.values().filter(|p| device_type(p) == ETHERNET);
-        let first = devices.next()?;
-        let p = if get::<u32>(first, "State") == Some(ACTIVATED) {
-            first
-        } else {
-            devices
-                .find(|p| get::<u32>(p, "State") == Some(ACTIVATED))
-                .unwrap_or(first)
-        };
+        let (_, p) = self.device(ETHERNET)?;
         Some(Wired {
             interface: string(p, "Interface"),
             connected: get::<u32>(p, "State") == Some(ACTIVATED),
@@ -441,7 +450,7 @@ impl Model {
         put(&s.access_points, list);
         put(&s.wired, self.wired());
         if let Ok(mut d) = s.wifi_device.lock() {
-            *d = self.wifi_devices().next().map(|(path, _)| path.clone());
+            *d = self.device(WIFI).map(|(path, _)| path.clone());
         }
         if let Ok(mut saved) = s.saved.lock() {
             *saved = self
@@ -600,46 +609,66 @@ async fn serve(conn: &zbus::Connection) {
 mod tests {
     use super::*;
 
-    fn ethernet(state: u32, interface: &str) -> Props {
+    fn value(v: impl Into<Value<'static>>) -> OwnedValue {
+        v.into().try_into().expect("a value")
+    }
+
+    fn device(kind: u32, state: u32, interface: &str) -> Props {
         HashMap::from([
-            (
-                "DeviceType".into(),
-                Value::from(ETHERNET).try_into().expect("device type"),
-            ),
-            (
-                "State".into(),
-                Value::from(state).try_into().expect("device state"),
-            ),
-            (
-                "Interface".into(),
-                Value::from(interface).try_into().expect("interface"),
-            ),
+            ("DeviceType".into(), value(kind)),
+            ("State".into(), value(state)),
+            ("Interface".into(), value(interface.to_owned())),
         ])
+    }
+
+    /// A model of `devices`, listed by NetworkManager in this order, each at `Devices/<n>`.
+    fn model(devices: Vec<(u32, Props)>) -> Model {
+        let path = |n: u32| format!("/org/freedesktop/NetworkManager/Devices/{n}");
+        let listed: Vec<OwnedObjectPath> = devices
+            .iter()
+            .map(|(n, _)| OwnedObjectPath::try_from(path(*n)).expect("a path"))
+            .collect();
+        Model {
+            root: HashMap::from([("Devices".into(), value(listed))]),
+            devices: devices.into_iter().map(|(n, p)| (path(n), p)).collect(),
+            ..Default::default()
+        }
+    }
+
+    fn wired(interface: &str, connected: bool) -> Option<Wired> {
+        Some(Wired {
+            interface: interface.into(),
+            connected,
+            speed: 0,
+        })
     }
 
     #[test]
     fn wired_selects_connected_device() {
-        let model = Model {
-            devices: BTreeMap::from([
-                (
-                    "/org/freedesktop/NetworkManager/Devices/2".into(),
-                    ethernet(20, "enp14s0"),
-                ),
-                (
-                    "/org/freedesktop/NetworkManager/Devices/3".into(),
-                    ethernet(ACTIVATED, "enp18s0"),
-                ),
-            ]),
-            ..Default::default()
-        };
+        let model = model(vec![
+            (2, device(ETHERNET, 20, "enp14s0")),
+            (3, device(ETHERNET, ACTIVATED, "enp18s0")),
+        ]);
+        assert_eq!(model.wired(), wired("enp18s0", true));
+    }
 
-        assert_eq!(
-            model.wired(),
-            Some(Wired {
-                interface: "enp18s0".into(),
-                connected: true,
-                speed: 0,
-            })
-        );
+    #[test]
+    fn devices_come_in_network_managers_order() {
+        // By their paths, `Devices/10` would come first.
+        let model = model(vec![
+            (2, device(ETHERNET, 20, "enp14s0")),
+            (10, device(ETHERNET, 20, "enp18s0")),
+        ]);
+        assert_eq!(model.wired(), wired("enp14s0", false));
+    }
+
+    #[test]
+    fn wifi_is_scanned_joined_and_left_on_the_connected_device() {
+        let model = model(vec![
+            (2, device(WIFI, 30, "wlan0")),
+            (3, device(WIFI, ACTIVATED, "wlan1")),
+        ]);
+        let path = model.device(WIFI).map(|(path, _)| path.as_str());
+        assert_eq!(path, Some("/org/freedesktop/NetworkManager/Devices/3"));
     }
 }

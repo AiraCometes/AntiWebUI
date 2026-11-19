@@ -402,6 +402,7 @@ net.disconnect() -> Task<..>
 net.wired() -> Option<Wired>
 ```
 
+- **どのデバイスか：** `wired()` と、`scan`・`connect`・`disconnect` が使う Wi-Fi デバイスは、つながっているものがあればそれ、なければ最初のもの。順番は NetworkManager の `Devices` の順で、パスの文字列順（`Devices/10` が `Devices/2` より前）ではない。
 - **接続の仕方：** `connect` は、保存済みの接続があれば `ActivateConnection`、なければ `AddAndActivateConnection` で行う。
 - **パスワード：**
   - 保存済みの接続でパスワードが足りないときの入力（シークレットエージェント）は、あとで足す。
