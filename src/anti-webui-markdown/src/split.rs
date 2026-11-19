@@ -4,7 +4,7 @@
 
 use crate::editor::list_keys;
 use crate::theme::MarkdownTheme;
-use crate::view::{Anchors, Emoji, Emojis, OnLink, Pictures, markdown_view};
+use crate::view::{Anchors, Emoji, Emojis, OnKey, OnLink, Pictures, markdown_view};
 use anti_webui_code::{CodeTheme, Language, code_editor};
 use anti_webui_core::drag::GrabPhase;
 use anti_webui_core::prelude::*;
@@ -20,7 +20,7 @@ pub struct MarkdownSplitEditor {
     theme: MarkdownTheme,
     code_theme: CodeTheme,
     on_link: OnLink,
-    on_key_down: Option<Rc<dyn Fn(&KeyboardEvent)>>,
+    on_key_down: OnKey,
     image: Pictures,
     emoji: Emojis,
     editor_ref: Option<EditorRef>,
@@ -65,7 +65,8 @@ impl MarkdownSplitEditor {
         self
     }
 
-    /// Called before the split editor handles a key. Preventing default skips its built-in handling.
+    /// Called with each key before the editor's own keys. Preventing the default keeps the editor
+    /// from doing anything with it.
     pub fn on_key_down(mut self, f: impl Fn(&KeyboardEvent) + 'static) -> Self {
         self.on_key_down = Some(Rc::new(f));
         self

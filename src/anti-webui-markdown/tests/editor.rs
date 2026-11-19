@@ -6,7 +6,7 @@ use anti_webui_core::event::*;
 use anti_webui_core::geometry::{PointF, Scale, SizeI};
 use anti_webui_core::prelude::*;
 use anti_webui_core::tree::{NodeId, NodeKind, with_doc};
-use anti_webui_markdown::{MarkdownTheme, markdown_editor};
+use anti_webui_markdown::{MarkdownEditor, MarkdownTheme, markdown_editor};
 use std::time::{Duration, Instant};
 
 fn mount<V: IntoView>(f: impl FnOnce() -> V) -> Ui {
@@ -21,11 +21,11 @@ fn mount<V: IntoView>(f: impl FnOnce() -> V) -> Ui {
 }
 
 fn editor(source: Signal<String>) -> impl IntoView {
-    markdown_editor(source)
-        .w(900.0)
-        .h(800.0)
-        .overflow_y_scroll()
-        .p(16.0)
+    editor_with(markdown_editor(source))
+}
+
+fn editor_with(e: MarkdownEditor) -> impl IntoView {
+    e.w(900.0).h(800.0).overflow_y_scroll().p(16.0)
 }
 
 fn key(ui: &mut Ui, key: Key, text: Option<&str>, modifiers: Modifiers) {
@@ -147,6 +147,28 @@ fn enter_goes_on_with_a_list_and_ends_it_on_an_empty_item() {
     assert_eq!(source.get_untracked(), "- one\n- two\n");
     key(&mut ui, Key::Character("z".into()), None, ctrl());
     assert_eq!(source.get_untracked(), "- one\n- two\n- ");
+}
+
+#[test]
+fn a_key_taken_before_the_editor_does_nothing_in_it() {
+    let source = signal("- one".to_owned());
+    let mut ui = mount(move || {
+        editor_with(markdown_editor(source).on_key_down(|e| {
+            if e.key == Key::Named(NamedKey::Enter) {
+                e.prevent_default();
+            }
+        }))
+    });
+    select(5);
+    ui.update();
+    named(&mut ui, NamedKey::Enter);
+    assert_eq!(
+        source.get_untracked(),
+        "- one",
+        "neither a new item nor a new line"
+    );
+    typ(&mut ui, "!");
+    assert_eq!(source.get_untracked(), "- one!", "the others are its own");
 }
 
 #[test]

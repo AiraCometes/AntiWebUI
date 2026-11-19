@@ -5,7 +5,7 @@
 
 use crate::parse::{options, scripts};
 use crate::theme::MarkdownTheme;
-use crate::view::{Ctx, Highlight, OnLink, Pictures};
+use crate::view::{Ctx, Highlight, OnKey, OnLink, Pictures};
 use anti_webui_core::event::KeyboardEvent;
 use anti_webui_core::prelude::*;
 use pulldown_cmark::{CodeBlockKind, CowStr, Event, Parser, Tag, TagEnd};
@@ -1093,7 +1093,7 @@ pub struct MarkdownEditor {
     source: Signal<String>,
     theme: MarkdownTheme,
     on_link: OnLink,
-    on_key_down: Option<Rc<dyn Fn(&KeyboardEvent)>>,
+    on_key_down: OnKey,
     image: Pictures,
     highlight: Option<Rc<Highlight>>,
     #[cfg(feature = "code")]
@@ -1127,7 +1127,8 @@ impl MarkdownEditor {
         self
     }
 
-    /// Called before the Markdown editor handles a key. Preventing default skips its built-in handling.
+    /// Called with each key before the editor's own keys. Preventing the default keeps the editor
+    /// from doing anything with it.
     pub fn on_key_down(mut self, f: impl Fn(&KeyboardEvent) + 'static) -> Self {
         self.on_key_down = Some(Rc::new(f));
         self

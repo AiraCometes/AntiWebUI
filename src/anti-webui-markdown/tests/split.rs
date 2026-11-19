@@ -495,3 +495,62 @@ fn time_scrolling_after_a_link() {
     eprintln!("the source scrolled: {}", frames(&mut ui, 40, 700.0));
     eprintln!("editor at line {:?}", editor.top_line());
 }
+
+#[test]
+fn a_key_taken_before_the_split_editor_does_nothing_in_it() {
+    let editor = editor_ref();
+    let source = signal("- one".to_owned());
+    let mut ui = mount(move || {
+        markdown_split_editor(source)
+            .editor_ref(editor)
+            .on_key_down(|e| {
+                if e.key == Key::Named(NamedKey::Enter) {
+                    e.prevent_default();
+                }
+            })
+            .w(1000.0)
+            .h(600.0)
+    });
+    editor.focus();
+    editor.select(5, 5);
+    ui.update();
+    for k in [Key::Named(NamedKey::Enter), Key::Character("!".into())] {
+        let text = matches!(k, Key::Character(_)).then(|| "!".into());
+        for pressed in [true, false] {
+            ui.handle_event(WindowEvent::Key(KeyEvent {
+                key: k.clone(),
+                text: text.clone().filter(|_| pressed),
+                modifiers: Modifiers::default(),
+                pressed,
+                repeat: false,
+            }));
+        }
+        ui.update();
+    }
+    assert_eq!(source.get_untracked(), "- one!");
+}
+
+#[test]
+fn going_before_the_caret_is_shown_on_the_right_is_no_harm() {
+    let editor = editor_ref();
+    let here = signal(true);
+    let mut ui = mount(move || {
+        show(
+            move || here.get(),
+            move || {
+                markdown_split_editor(signal(long_doc(20)))
+                    .editor_ref(editor)
+                    .w(1000.0)
+                    .h(600.0)
+            },
+        )
+    });
+    editor.focus();
+    // Moving the caret asks for a frame to show it once the right side is laid out again.
+    let at = editor.with(|e| e.line(5).start).unwrap();
+    editor.select(at, at);
+    here.set(false);
+    ui.update();
+    ui.animate(Instant::now());
+    ui.update();
+}

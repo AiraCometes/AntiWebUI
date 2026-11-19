@@ -56,6 +56,7 @@ impl<F: Fn() -> S + 'static, S: Into<String>> IntoMarkdown for F {
 
 pub(crate) type Highlight = dyn Fn(&str, &str) -> Vec<(Range<usize>, Rc<Style>)>;
 pub(crate) type OnLink = Option<Rc<dyn Fn(&str)>>;
+pub(crate) type OnKey = Option<Rc<dyn Fn(&KeyboardEvent)>>;
 pub(crate) type Pictures = Option<Rc<dyn Fn(&str) -> ImageSource>>;
 pub(crate) type Emojis = Option<Rc<dyn Fn(&str) -> Option<Emoji>>>;
 
