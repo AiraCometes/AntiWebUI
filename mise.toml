@@ -1,0 +1,40 @@
+# Fork-owned development tools and tasks. See docs/fork/quality/tool-adoption-matrix.md for why each
+# tool is here, and docs/fork/decisions/0005-minimal-phase-0-toolchain.md for the scope.
+# Tools here are development-only. None of them is a runtime dependency of any crate.
+
+[tools]
+# hk matches the version the user-level hk config amends, so the bundled Pkl package is reused.
+hk = "2.13.0"
+"npm:@fission-ai/openspec" = "2.0.0"
+typos = "1.52.2"
+rumdl = "0.3.5"
+taplo = "0.10.0"
+lychee = "0.24.2"
+
+[tasks."docs:lint"]
+description = "Lint fork-owned Markdown"
+run = "rumdl check AGENTS.md CLAUDE.md docs/fork openspec"
+
+[tasks."docs:links"]
+description = "Check links in fork-owned Markdown, local targets only"
+run = "lychee --offline --no-progress --include-fragments AGENTS.md CLAUDE.md 'docs/fork/**/*.md'"
+
+[tasks."docs:links-online"]
+description = "Check links in fork-owned Markdown, including external URLs (network)"
+run = "lychee --no-progress AGENTS.md CLAUDE.md 'docs/fork/**/*.md'"
+
+[tasks.spell]
+description = "Check spelling in fork-owned files"
+run = "typos AGENTS.md CLAUDE.md docs/fork openspec mise.toml hk.pkl .rumdl.toml .taplo.toml"
+
+[tasks."toml:check"]
+description = "Check formatting of fork-owned TOML"
+run = "taplo fmt --check"
+
+[tasks."spec:validate"]
+description = "Validate all OpenSpec specs and changes"
+run = "openspec validate --all --strict --no-interactive"
+
+[tasks.check]
+description = "Run every fast fork check (no network)"
+depends = ["docs:lint", "docs:links", "spell", "toml:check", "spec:validate"]
