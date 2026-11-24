@@ -18,6 +18,7 @@ Documents owned by this fork. Upstream documents stay in [`docs/design/`](../des
 | Document | Contents |
 |---|---|
 | [Tool adoption matrix](quality/tool-adoption-matrix.md) | Every candidate tool, its version, licence, and adoption phase; agent skills; quality gate tiers |
+| [CI and quality services plan](quality/ci-and-quality-services.md) | CI matrix and software GPU devices; Renovate, CodeQL, secret scanning, dependency review, Codecov, SonarQube Cloud, CodeRabbit; Kache with GHCR |
 | [Phase 0 inspection](research/phase-0-inspection.md) | Repository, toolchain, licence, and upstream facts at the baseline commit |
 | [Phase 1 audit plan](research/phase-1-audit-plan.md) | Workstreams and exit criteria for the upstream audit |
 | [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md) | taffy as a differential layout oracle; proptest-state-machine, Quint + ITF, Stateright, Loom, and Shuttle for state transitions and concurrency |

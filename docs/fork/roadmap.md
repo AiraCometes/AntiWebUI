@@ -32,11 +32,11 @@ arc42 architecture, subsystem boundaries, dependency rules, coordinate systems, 
 
 ## Phase 4: technical validation
 
-Spikes, proofs of concept, architecture review, performance experiments, cross-platform feasibility, final ADRs, the policy on editing upstream-owned files and on pull requests to upstream, the build-cache trial (Kache, sccache, incremental builds), and the [test oracle and model-checking spikes](research/candidate-test-oracles-and-model-checking.md) (taffy differential layout tests, proptest-state-machine, Quint or Stateright, Loom and Shuttle).
+Spikes, proofs of concept, architecture review, performance experiments, cross-platform feasibility, final ADRs, the policy on editing upstream-owned files and on pull requests to upstream, the build-cache spike (Kache with its GHCR remote and cleanup, measured against incremental builds), and the [test oracle and model-checking spikes](research/candidate-test-oracles-and-model-checking.md) (taffy differential layout tests, proptest-state-machine, Quint or Stateright, Loom and Shuttle).
 
 ## Phase 5: engineering infrastructure
 
-OpenSpec baseline specifications, fitness functions, quality gates, CI/CD on GitHub Actions, security checks, benchmark and testing infrastructure, upstream sync automation, and implementation epics with their dependency graph.
+OpenSpec baseline specifications, fitness functions, quality gates, CI/CD on GitHub Actions for Linux, Windows, and macOS, security checks, the services in the [CI and quality services plan](quality/ci-and-quality-services.md) (Renovate, CodeQL, secret scanning, dependency review, Codecov, SonarQube Cloud, CodeRabbit, Kache), documentation publishing, benchmark and testing infrastructure, upstream sync automation, and implementation epics with their dependency graph.
 
 ## Phase 6: incremental implementation
 

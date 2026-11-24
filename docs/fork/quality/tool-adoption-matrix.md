@@ -33,8 +33,8 @@ Adoption phases follow the [quality gates](#quality-gate-tiers): commit, pull re
 | cargo-shear | Unused dependencies | 1.14.1 | MIT | available | Chosen over cargo-machete; use one, not both | 5 | pull request |
 | cargo-machete | Unused dependencies | 0.10.1 | MIT | available | Overlaps cargo-shear | dropped | — |
 | cargo-hack | Feature matrix | 0.6.46 | Apache-2.0 | — | Many features (`wayland`, `x11`, `macos`, `windows`, `svg`, `video`, …) | 5 | critical change |
-| rust-code-analysis | Complexity metrics | 0.0.25 (2023-01-13) | MPL-2.0 | — | Last release is old; compare with alternatives before adopting | 5 (evaluate) | pull request |
-| jscpd | Duplicate code | 5.4.3 | MIT | — | Node tool; baseline first | 5 | pull request |
+| rust-code-analysis | Complexity metrics | 0.0.25 (2023-01-13) | MPL-2.0 | — | Superseded by SonarQube Cloud | dropped | — |
+| jscpd | Duplicate code | 5.4.3 | MIT | — | Superseded by SonarQube Cloud | dropped | — |
 | cargo-semver-checks | Public API compatibility | 0.51.0 | Apache-2.0 | — | Meaningful once a public API is declared | 7 | pull request |
 | cargo-nextest | Test runner | 0.9.152 | Apache-2.0 | available | Check GPU tests that pass by skipping (see the [inspection](../research/phase-0-inspection.md#code-size-tests-and-benchmarks)) | 1, 5 | pull request |
 | cargo-llvm-cov | Coverage | 0.9.2 latest; 0.9.1 local | Apache-2.0 | available | Baseline in Phase 1 | 1 | phase completion |
@@ -54,14 +54,24 @@ Adoption phases follow the [quality gates](#quality-gate-tiers): commit, pull re
 | cargo-bloat | Binary size breakdown | 0.12.1 (2024-05-10) | MIT | available | Baseline binary size in Phase 1 | 1 | phase completion |
 | Allocation counter | Zero hot-path allocation checks | `allocation-counter` 0.8.1, `stats_alloc` 0.1.10, `dhat` 0.3.3, or a small in-repo global allocator | MIT/Apache-2.0 | — | All three crates are old; a test-only allocator may be simpler | 5 (decide) | pull request |
 | Vale | Prose style | 3.28.1 | MIT | — | Add only if rumdl and review miss real problems | 5 (evaluate) | commit |
-| mdBook | Published docs | 0.5.4 | MPL-2.0 | — | Publication stage | 7 | — |
-| GitHub Actions | CI | — | — | — | All CI goes here | 5 | pull request |
+| mdBook | Docs site generator (Docs as Code) | 0.5.4 | MPL-2.0 | — | First candidate; choose the generator in Phase 5 ([documentation policy](../documentation-policy.md#docs-as-code)) | 5 | pull request |
+| GitHub Pages | Hosts the docs site and rustdoc | — | — | — | Built and published by CI from `main` | 5 | — |
+| GitHub Actions | CI on Linux, Windows, and macOS runners | — | — | — | All CI goes here ([plan](ci-and-quality-services.md#ci-matrix-and-gpu-tests)) | 5 | pull request |
+| Mesa lavapipe and llvmpipe | Software Vulkan and GL devices for GPU tests | Linux packages; `gfx-rs/ci-build` on Windows | MIT | — | Runners have no GPU | 5 | pull request |
+| WARP | Software DX12 device on Windows runners | ships with Windows | — | — | Tests upstream's default DX12 path | 5 | pull request |
+| Mend Renovate | Grouped dependency updates with automerge after CI | GitHub app | AGPL-3.0 (self-hosted CLI; the app is a hosted service) | — | Replaces Dependabot version updates; fork-owned files only until Phase 4 ([plan](ci-and-quality-services.md#dependency-updates-renovate)) | 5 | pull request |
+| CodeQL | Code scanning for Rust and Actions | GitHub service | — | — | Rust GA since 2025-10-14 | 5 | pull request |
+| Secret scanning and push protection | Leaked-secret detection | GitHub setting | — | — | No workflow needed; can be turned on before Phase 5 | 5 | commit (push) |
+| Dependency review | Blocks pull requests that add vulnerable or disallowed dependencies | `actions/dependency-review-action` | MIT | — | Pull request diff only; cargo-deny checks the whole graph | 5 | pull request |
+| Codecov | Coverage reports and pull request comments | GitHub app and action | — | — | Uploads the cargo-llvm-cov LCOV report from each OS | 5 | pull request |
+| SonarQube Cloud | Complexity, duplication, and technical debt | Free plan | — | — | Imports Clippy JSON and LCOV; gate on new code only | 5 | pull request |
+| CodeRabbit | Automated pull request review | GitHub app | — | — | Runs after the agent's diff review; does not replace the maintainer's approval | 5 | pull request |
 | actionlint | Workflow lint | 1.7.12 | MIT | available | With the first workflow | 5 | commit |
 | zizmor | Workflow security | 1.33.1 | MIT | available | With the first workflow | 5 | commit |
 | pinact | Pin actions by SHA | 5.0.2 | MIT | available | With the first workflow | 5 | commit |
-| Dependabot | Dependency updates | — | — | — | Config only, no install | 5 | — |
-| Kache | Build cache (trial) | 2.3.0 | Apache-2.0 | — | Compare with incremental builds and sccache 0.20.0; Linux, macOS, and Windows per README (Confirmed), Rust executables cached by default on Linux and macOS only | 4 (spike) | — |
-| sccache | Build cache | 0.20.0 latest; 0.19.0 local | Apache-2.0 | available | Comparison baseline for Kache | 4 (spike) | — |
+| Dependabot | Dependency updates | — | — | — | Replaced by Renovate; only Dependabot alerts stay on, as Renovate's vulnerability source | dropped (alerts kept) | — |
+| Kache | Build cache, local and CI, with `ghcr.io` as its OCI remote | 2.3.0 | Apache-2.0 | — | Chosen by the maintainer; the Phase 4 spike measures it and sets the GHCR cleanup age ([plan](ci-and-quality-services.md#build-cache-kache-with-ghcr)). Rust executables cached by default on Linux and macOS only | 4 (spike), 5 | — |
+| sccache | Build cache | 0.20.0 latest; 0.19.0 local | Apache-2.0 | available | Fallback only if the Kache spike fails | 4 (spike) | — |
 | taffy | Differential layout oracle and Chrome-generated fixtures (dev-dependency only, never the layout engine) | 0.16.0 | MIT | — | ±1 px per edge, because of edge snapping versus integer-first rounding ([evaluation](../research/candidate-test-oracles-and-model-checking.md#part-1-taffy-as-a-differential-layout-oracle)) | 1 (count fixtures), 4 (spike), 5 | pull request |
 | proptest-state-machine | Single-thread state machines against a reference model (focus, gestures, undo/redo, history, scheduler logic) | 0.9.0 | MIT OR Apache-2.0 | — | Default for single-thread state machines | 4 (spike), 5 | pull request |
 | Quint + ITF | Design-level invariants; ITF traces (`quint run --mbt --out-itf`) replayed by an in-repo driver | Quint 0.34.0 (npm) | Apache-2.0 | — | Needs Node.js (JVM for Apalache); choose one of Quint and Stateright ([evaluation](../research/candidate-test-oracles-and-model-checking.md#how-they-fit-together)) | 4 (spike) | critical change |
@@ -106,6 +116,6 @@ Task-breakdown and spec skills that overlap OpenSpec (`to-spec`, `to-tickets`, `
 | Tier | Runs | Contents (target) | Now |
 |---|---|---|---|
 | Commit | hk pre-commit, seconds | Format, lint, and spelling on changed fork-owned files; OpenSpec validation | Markdown, links (offline), spelling, TOML, OpenSpec |
-| Pull request | CI, minutes | Tests, Clippy, dependency rules, fitness functions | none (Phase 5) |
+| Pull request | CI on Linux, Windows, and macOS, minutes | Build and tests (GPU tests on software devices), Clippy, dependency rules, fitness functions, CodeQL, dependency review, Codecov, SonarQube Cloud, agent review, CodeRabbit | none (Phase 5) |
 | Critical change | CI on label or path, tens of minutes | Feature matrix, mutation testing on changed code, safety checks | none (Phase 5) |
 | Phase completion | Manual or scheduled | Kani, ASan, broad mutation testing, competitor benchmarks, real-device checks | none |

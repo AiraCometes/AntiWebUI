@@ -17,7 +17,11 @@ Smaller decisions made in conversation, which are not ADRs yet. Each one becomes
 
 | Topic | Current position | Source | Settles in |
 |---|---|---|---|
-| CI platform | All CI runs on GitHub Actions; the repository is public, so usage cost is not a constraint | Maintainer, 2026-11-24 conversation | Phase 5 |
+| CI platform | All CI runs on GitHub Actions; the repository is public, so usage cost is not a constraint. Builds and tests run on Linux, Windows, and macOS runners, with software GPU devices (Mesa lavapipe or llvmpipe, WARP) ([plan](../quality/ci-and-quality-services.md#ci-matrix-and-gpu-tests)) | Maintainer, 2026-11-24 and 2026-11-25 conversations | Phase 5 |
+| Docs as Code | Documents are written, reviewed, checked, and published like code; CI publishes the site and rustdoc to GitHub Pages ([policy](../documentation-policy.md#docs-as-code)) | Maintainer, 2026-11-25 conversation | Phase 5 (site generator) |
+| Dependency updates | Mend Renovate, not Dependabot: grouped pull requests, automerge after CI. Fork-owned files only until the Phase 4 decision on upstream-owned files ([plan](../quality/ci-and-quality-services.md#dependency-updates-renovate)) | Maintainer, 2026-11-25 conversation | Phase 5 |
+| Security and quality services | CodeQL, secret scanning, dependency review, Codecov, SonarQube Cloud, and CodeRabbit ([plan](../quality/ci-and-quality-services.md)) | Maintainer, 2026-11-25 conversation | Phase 5 |
+| Build cache | Kache locally and in CI, with `ghcr.io` as the OCI remote and a scheduled cleanup of old tags ([plan](../quality/ci-and-quality-services.md#build-cache-kache-with-ghcr)) | Maintainer, 2026-11-25 conversation | Phase 4 spike, then ADR |
 | Pull requests to upstream | Whether to send any at all is open; if sent, each one needs the maintainer's approval | Maintainer, 2026-11-24 and 2026-11-25 conversations | Phase 4 |
 | Editing upstream-owned files | Whether fork work may edit upstream-owned files (for example a `cfg(loom)` sync facade in `anti-webui-core`), and how to keep tracking upstream if it does. Until then, fork work uses fork-owned paths and copies | Maintainer, 2026-11-25 conversation | Phase 4 |
 | Officially supported platforms | Windows, macOS, and Linux as equals (bootstrap brief); the order of manual verification is open | Bootstrap brief | Phase 2 |

@@ -35,6 +35,7 @@
 - Commits that touch `mise.toml` or `hk.pkl` need `verify-commits accept` by the maintainer.
 - Real macOS and Windows devices for verification: availability unknown.
 - Phase 4 decides the policy on editing upstream-owned files and on pull requests to upstream ([decision log](decisions/README.md#decisions-awaiting-confirmation)).
+- The maintainer chose the CI and quality services on 2026-11-25 ([plan](quality/ci-and-quality-services.md)). Its open questions: Renovate and the upstream-owned `Cargo.toml` and `Cargo.lock`; the GHCR 5,000-download deletion limit; CodeRabbit's plan for public repositories.
 - The maintainer accepted the [test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md) on 2026-11-25 as the plan for the Phase 4 spikes.
 - Whether to run Phase 1 workstreams by one agent or split across agents.
 

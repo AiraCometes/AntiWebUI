@@ -2,6 +2,16 @@
 
 This policy covers documents the fork creates. Upstream documents (`README.md`, `docs/design/`) stay as written, in their original language ([ADR-0004](decisions/0004-english-fork-documentation.md)).
 
+## Docs as Code
+
+Documents are written, managed, and published the same way as code (maintainer direction, 2026-11-25).
+
+- Write: plain text in this repository (Markdown, OpenSpec artifacts, rustdoc, text diagrams), next to the code they describe.
+- Change: through branches and pull requests, reviewed like code: the agent's diff review, CodeRabbit, and the maintainer ([CI and quality services](quality/ci-and-quality-services.md#pull-request-review-coderabbit)).
+- Check: by machines at every gate. hk runs the fast checks on commit; CI runs the same mise tasks on every pull request, rustdoc and doc tests with the build, and the online link check on a schedule (Phase 5).
+- Publish: CI builds the documentation site and rustdoc from `main` and publishes them to GitHub Pages. The site generator is chosen in Phase 5; mdBook is the first candidate ([tool adoption matrix](quality/tool-adoption-matrix.md)).
+- Generate, do not copy: API references, metrics, and dependency graphs are generated from the source by tools, never pasted by hand.
+
 ## Language
 
 - English is canonical for technical documents, OpenSpec artifacts, architecture documents, ADRs, `AGENTS.md`, `CLAUDE.md`, source comments, rustdoc, commit messages, issues, and pull requests.
