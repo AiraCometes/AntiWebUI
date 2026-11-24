@@ -38,3 +38,5 @@ OpenSpec in `openspec/` is the only specification system ([ADR-0003](docs/fork/d
 ## Upstream
 
 Bring upstream in with merge commits from `upstream/main`. A pull request to `bea4dev/AntiWebUI` is sent only after the maintainer approves it.
+
+Name the fork whenever you open a pull request: `gh pr create --repo AiraCometes/AntiWebUI --base main`. On a fork, `gh` and PR tools default to the parent repository, which opens the PR upstream.
