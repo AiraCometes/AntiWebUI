@@ -8,6 +8,7 @@
 
 ## Completed in this session
 
+- Added `aarch64-apple-darwin` to `rust-toolchain.toml` (maintainer, 2026-11-26), so every session can type-check `anti-webui-macos`.
 - A5 [platform matrix](research/audit-platform-matrix.md) (`5f6918b`), drafted by Pi and completed with cross-checks: Windows and macOS targets type-check except `anti-webui-code` and `anti-webui-markdown` (their `tree-sitter` C build scripts need a target C toolchain); the `svg` example fails with `--no-default-features`.
 - A7 [baseline quality](research/audit-baseline-quality.md) (`5496049`): rustfmt fails on 20 files; Clippy reports 1,159 warnings, 1,109 of them rustc's `float_literal_f32_fallback` from the `setter!` macro's `impl Into<f32>` (a future hard error); `SAFETY:` comments are missing almost only in `anti-webui-macos`; complexity and duplication baselines from lizard and jscpd.
 - Earlier in Phase 1: A2 [licences](research/audit-licenses.md), A3 [wgpu fork](research/audit-wgpu-fork.md), A4a [core](research/audit-capabilities-core.md), A4b [rendering](research/audit-capabilities-rendering.md), A4c [platform](research/audit-capabilities-platform.md), A6 [tests](research/audit-tests.md); toolchain pinned to 1.99.0 (`89c8afc`); Kache used locally (`4bcbd84`).
@@ -21,6 +22,7 @@
 
 - `docs/fork/research/audit-baseline-quality.md`, `docs/fork/research/audit-platform-matrix.md` (new)
 - `docs/fork/README.md`
+- `rust-toolchain.toml`, `docs/fork/quality/tool-adoption-matrix.md`
 - `docs/fork/handoff.md`
 
 ## Verification
@@ -35,7 +37,6 @@
 
 - The agent sandbox sets `RUSTC_WRAPPER=""` (`~/.config/agent-guard/env`), so agent builds bypass Kache; builds in the maintainer's terminal use it. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
 - `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
-- `aarch64-apple-darwin` was added with `rustup target add` for A5 but is not in `rust-toolchain.toml`; whether to add it is the maintainer's decision ([A5 open questions](research/audit-platform-matrix.md#open-questions)).
 - The `setter!` f32 fix is not proposed upstream (maintainer, 2026-11-26); the fork's style API handles it ([A7](research/audit-baseline-quality.md#the-f32-literal-fallback)).
 - Carry to Phase 2: the verification steps in Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity. Also using the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks (Kani `cover!`, reachability checks for Quint or Stateright, bounded results labelled with their bound) go to the Phase 4 spikes.
 - Real macOS and Windows devices for A5 and A9: availability unknown.

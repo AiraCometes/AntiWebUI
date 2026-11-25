@@ -36,7 +36,7 @@ Reading order: the plan's [Limits of this machine](phase-1-audit-plan.md#limits-
 
 This machine, as found (all Confirmed by the commands above unless marked):
 
-- Toolchain 1.99.0 from `rust-toolchain.toml`. Installed targets: `x86_64-unknown-linux-gnu`, `x86_64-pc-windows-msvc` (listed in `rust-toolchain.toml`), and `aarch64-apple-darwin`, added for this audit with `rustup target add` and not listed in `rust-toolchain.toml`.
+- Toolchain 1.99.0 from `rust-toolchain.toml`. Installed targets: `x86_64-unknown-linux-gnu`, `x86_64-pc-windows-msvc` (listed in `rust-toolchain.toml`), and `aarch64-apple-darwin`, added for this audit with `rustup target add` and then to `rust-toolchain.toml` (maintainer, 2026-11-26).
 - WSL2, Linux 6.18, inside the agent sandbox. `WAYLAND_DISPLAY` and `DISPLAY` are unset in this shell, while `$XDG_RUNTIME_DIR/wayland-0` is a symlink to `/mnt/wslg/runtime-dir/wayland-0` and an X socket exists at `/tmp/.X11-unix/X0`: WSLg is serving both, but this shell is not pointed at either.
 - Connecting to that Wayland socket from the sandbox fails with `Operation not permitted` (Python `AF_UNIX` connect). Whether it connects from the maintainer's terminal is Unverified; what would check it is running an example outside the sandbox.
 - No `/dev/dri`. Eight Vulkan ICDs are installed (`asahi`, `gfxstream`, `intel`, `intel_hasvk`, `lvp`, `nouveau`, `radeon`, `virtio`); only `lvp` (lavapipe) works without a device node, so a headless render here is software (Inferred from the missing device node and A6's adapter note).
@@ -222,7 +222,7 @@ On Linux everything builds, with all features. The baseline for this workstream 
 | Item | Impact | Likelihood | Evidence |
 |---|---|---|---|
 | One machine per OS is the whole evidence base (one M1 Pro, one Windows laptop, one ShojiWM session), and this fork has run none of them | A compositor, GPU, or OS-version regression is invisible until a user reports it | High | [The matrix](#the-matrix); `38:312`, `39:399`, `36:285` |
-| No macOS or Windows CI job, and the Apple target is not in `rust-toolchain.toml` | The two crates can rot silently; a type-check here catches API breaks but not link or run failures | Certain today | [Method](#method); `rust-toolchain.toml` |
+| No macOS or Windows CI job | The two crates can rot silently; a type-check here catches API breaks but not link or run failures | Certain today | [Method](#method); `rust-toolchain.toml` |
 | Cross-checks need a C toolchain for `tree-sitter` | `anti-webui-code` and `anti-webui-markdown` cannot be checked for Windows or macOS from Linux | Certain today | [Method](#method) |
 | The X11 test binary needs a system library (`libxkbcommon-x11`) that the repository never declares | The same tree links on one machine and not on another: A4c could not link and this audit finds the library installed | Medium | `ldconfig -p`; [Baseline violations](#baseline-violations) |
 | Platform tests need Unix sockets and, for X11, a display server | Agents cannot verify platform changes; only the maintainer's terminal can | Certain in the sandbox | [A6](audit-tests.md#failures-on-this-machine); `wayland/tests/layer_protocol.rs:332` |
@@ -235,7 +235,6 @@ On Linux everything builds, with all features. The baseline for this workstream 
 
 - Which real macOS and Windows devices are available for Phase 1 exit and later phases? Owned by the maintainer. Answered by naming one device per OS with its OS version and display scale, then running `cargo test -p anti-webui-app --test macos` (and `macos_spawn`) and `--test windows` there, recording the adapter and scale. Today both are Unverified.
 - Does WSLg's Wayland compositor work from the maintainer's terminal? Answered by running `showcase` there with `ANTIWEBUI_PERF_OVERLAY=1` and reading the presenter line. The socket exists and the sandbox refuses it, so whether the compositor works at all is Unverified.
-- Should `aarch64-apple-darwin` join `x86_64-pc-windows-msvc` in `rust-toolchain.toml`, so every session can type-check macOS? Proposed; the maintainer decides, since it changes a fork-owned toolchain file.
 - Can `anti-webui-code` and `anti-webui-markdown` be cross-checked with a target C toolchain (for example cargo-xwin for MSVC, or zig as the C compiler)? Answered by trying one in a later phase; it is a tool adoption decision ([tool matrix](../quality/tool-adoption-matrix.md)).
 - Does plain Xorg behave as `35` predicts for implicit sync and popups without a compositor? Answered by an Xorg session on another VT (amdgpu, glamor), as `35`, "確かめ方", "素の Xorg" plans.
 - Do GNOME's client-side decorations and KDE's server-side decorations produce working title bars? Answered by running `multi_window` there, which `36`, "確かめ方", lists as manual work.
