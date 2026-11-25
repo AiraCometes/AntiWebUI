@@ -1,0 +1,5 @@
+# taplo formats only fork-owned TOML. Upstream Cargo manifests keep their own layout.
+include = ["mise.toml", ".rumdl.toml", ".taplo.toml"]
+
+[formatting]
+column_width = 100

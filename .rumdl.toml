@@ -1,0 +1,17 @@
+# rumdl settings for fork-owned Markdown. Upstream documents (README.md, docs/design/) are kept as
+# they are and are not linted.
+
+[global]
+include = ["AGENTS.md", "CLAUDE.md", "docs/fork/**/*.md", "openspec/**/*.md"]
+# Prose is not wrapped at a fixed width.
+disable = ["MD013"]
+
+[MD003]
+style = "atx"
+
+[MD004]
+style = "dash"
+
+[per-file-ignores]
+# CLAUDE.md only imports AGENTS.md, which Claude Code reads through the `@` import.
+"CLAUDE.md" = ["MD041"]

@@ -1,0 +1,40 @@
+// Fork-owned git hooks. Each step checks only fork-owned files; upstream files (src/, docs/design/,
+// README.md, Cargo manifests) are left to upstream conventions. Rust steps (rustfmt, clippy,
+// cargo-deny) are added after the Phase 1 baseline (docs/fork/decisions/0005-minimal-phase-0-toolchain.md).
+amends "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Config.pkl"
+
+local forkMarkdown = List("AGENTS.md", "CLAUDE.md", "docs/fork/**/*.md", "openspec/**/*.md")
+local forkToml = List("mise.toml", ".rumdl.toml", ".taplo.toml")
+
+local linters = new Mapping<String, Step> {
+  ["rumdl"] {
+    glob = forkMarkdown
+    check = "rumdl check {{files}}"
+  }
+  ["lychee"] {
+    glob = forkMarkdown
+    check = "lychee --offline --no-progress --include-fragments {{files}}"
+  }
+  ["typos"] {
+    glob = forkMarkdown + forkToml + List("hk.pkl")
+    check = "typos --force-exclude {{files}}"
+  }
+  ["taplo"] {
+    glob = forkToml
+    check = "taplo fmt --check {{files}}"
+  }
+  ["openspec"] {
+    glob = List("openspec/**")
+    check = "openspec validate --all --strict --no-interactive"
+  }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = false
+    steps = linters
+  }
+  ["check"] {
+    steps = linters
+  }
+}
