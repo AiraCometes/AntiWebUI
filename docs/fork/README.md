@@ -24,6 +24,7 @@ Documents owned by this fork. Upstream documents stay in [`docs/design/`](../des
 | [Audit A1: dependencies](research/audit-dependencies.md) | Crate layers, features, dependency counts and duplicates, crate and module cycles, core's reach to GPU and OS crates |
 | [Audit A2: licences](research/audit-licenses.md) | Crate licences by feature, advisories, bundled fonts and assets, copied code, libraries loaded at run time, third-party notices |
 | [Audit A3: wgpu fork](research/audit-wgpu-fork.md) | What `bea4dev/wgpu` changes against v30.0.1, where it is used, build without it, maintenance cost, upstream wgpu state |
+| [Audit A4a: core capabilities](research/audit-capabilities-core.md) | Reactivity, node tree, styles, layout and the pixel model, text, editing and IME, transforms, input, scrolling; taffy fixture counts; state machines |
 | [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md) | taffy as a differential layout oracle; proptest-state-machine, Quint + ITF, Stateright, Loom, and Shuttle for state transitions and concurrency |
 | [Templates](templates/) | Constitution, audit, competitor analysis, gap analysis, spike, benchmark report, ADR, handoff |
 
