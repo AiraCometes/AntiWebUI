@@ -83,14 +83,14 @@ Oracle classification: each integration test file and each crate's unit tests we
 
 | Tests | Where | Error | Cause | Label |
 |---|---|---|---|---|
-| 5 Wayland protocol tests (`drag`, `fullscreen`, `layer`, `lock`, `popup_grab`) | `anti-webui-wayland/tests/*_protocol.rs`, for example `layer_protocol.rs:332` | `ListeningSocket::bind_absolute(...)`: `Operation not permitted` | The agent sandbox refuses to bind Unix sockets | Inferred: the error is the bind call; not yet re-run outside the sandbox |
-| 11 wayland-shell bus and IPC tests | `anti-webui-wayland-shell/tests/common/mod.rs:47`, `hyprland_ipc.rs:54`, `niri_ipc.rs:26`, `sway_ipc.rs:44`, … | zbus `Invalid address`, `Operation not permitted`, a timeout waiting for the tray watcher | Same: no session bus and no Unix sockets inside the sandbox | Inferred, same check pending |
+| 5 Wayland protocol tests (`drag`, `fullscreen`, `layer`, `lock`, `popup_grab`) | `anti-webui-wayland/tests/*_protocol.rs`, for example `layer_protocol.rs:332` | `ListeningSocket::bind_absolute(...)`: `Operation not permitted` | The agent sandbox refuses to bind Unix sockets | Confirmed: the same tests pass in a normal WSL terminal (see below) |
+| 11 wayland-shell bus and IPC tests | `anti-webui-wayland-shell/tests/common/mod.rs:47`, `hyprland_ipc.rs:54`, `niri_ipc.rs:26`, `sway_ipc.rs:44`, … | zbus `Invalid address`, `Operation not permitted`, a timeout waiting for the tray watcher | Same: no session bus and no Unix sockets inside the sandbox | Confirmed, same run |
 | `core::svg::text_with_letters_on_their_own_is_outlines` | `anti-webui-core/tests/svg.rs:571` | no outlines produced | `usvg`'s default font families name Times New Roman and Arial, and this machine has only DejaVu (`fc-list`), so the text is dropped | Inferred from `fc-list` and `svg_file.rs:84-93` (`load_system_fonts` with no fallback family) |
 | `app::images::svg_with_text_shows_it` | `anti-webui-app/tests/images.rs:335` | `dark` is 0 | Same as above: `font-family="sans-serif"` resolves to a font that is not installed | Inferred |
 | `math::layout::tests::what_the_katex_fonts_lack_is_drawn_with_the_programs` | `anti-webui-math/src/layout.rs:1269` | width 1.77, expected more than 2.3 | No Japanese font is installed (`fc-list :lang=ja` is empty), so `日本` falls back to a narrow glyph | Inferred |
 | `app::render::text_scaled_up_is_as_sharp_as_bigger_text` | `anti-webui-app/tests/render.rs:1162` | 1,053 pixels differ, limit 300 | Depends on the system's default font; the reference machine's font is unknown | Unverified |
 
-- Status: partial. Every failure depends on the environment: 16 on what the sandbox allows, 4 on which fonts are installed. No failure points at a code defect.
+- Status: partial. Every failure depends on the environment: 16 on what the sandbox allows, 4 on which fonts are installed. No failure points at a code defect. Outside the sandbox, in a normal WSL terminal on the same machine, `cargo nextest run --locked -p anti-webui-wayland -p anti-webui-wayland-shell --all-features` reported `65 tests run: 65 passed, 9 skipped` (maintainer's run, 2026-11-26).
 - Quality notes: tests that read system fonts state their expectations for one machine's font set. Nothing in the repository pins that set (no font fixture, no `fc-list` check, no skip). A fork CI image must either install the expected fonts or the tests must bring their own.
 
 ### GPU and headless rendering
@@ -126,7 +126,7 @@ Line coverage from `cargo llvm-cov nextest`, Linux, default features, inside the
 
 - Status: present
 - Behaviour: the platform-independent crates are well covered (core, md3e, widgets, markdown, math, code: 87–92%). The OS backends are not. `anti-webui-wayland` 4.2% and `anti-webui-x11` 11.7%, because their protocol tests failed in the sandbox and no compositor or X server ran. `anti-webui-video` 15.7%, because FFmpeg is absent. `anti-webui-wayland-shell` 17.8%, because most of its tests need non-default features. `anti-webui-macos` and `anti-webui-windows` are not compiled on Linux and do not appear.
-- Label: Confirmed for these numbers on this machine. The backend figures are a lower bound until the protocol tests run outside the sandbox
+- Label: Confirmed for these numbers inside the sandbox. The Wayland and wayland-shell figures are a lower bound: their protocol and bus tests pass outside the sandbox but were not measured for coverage there
 
 ### Test oracles
 
@@ -169,7 +169,7 @@ cargo-mutants 27.1.0 on `EditData::snapshot`, `undo`, and `redo` in `anti-webui-
 
 ## Baseline violations
 
-- 20 tests fail in this environment: 16 because of the agent sandbox and 4 because of the installed fonts ([Failures on this machine](#failures-on-this-machine)). The fork baseline is "these 20 and no others", until the sandbox ones are confirmed on a host run and the font ones have a fixture.
+- 20 tests fail in this environment: 16 because of the agent sandbox and 4 because of the installed fonts ([Failures on this machine](#failures-on-this-machine)). The 16 sandbox failures pass outside the sandbox, so the baseline outside it is the 4 font-dependent failures; inside the agent sandbox it is these 20. The font ones stay until they have a fixture.
 - 25 video tests and 13 pixel-test files pass silently when FFmpeg or a GPU is missing.
 - 69 tests that build on Linux run only with non-default features, so `cargo test --workspace` skips them.
 - The build prints `float_literal_f32_fallback` future-incompatibility warnings in tests and crates (for example `anti-webui-widgets/src/menu.rs:648`, `anti-webui-math/tests/math.rs:155`). A7 counts them.
@@ -187,7 +187,7 @@ cargo-mutants 27.1.0 on `EditData::snapshot`, `undo`, and `redo` in `anti-webui-
 
 ## Open questions
 
-- Do the 16 sandbox failures pass outside the sandbox? Answer: run `cargo nextest run --locked -p anti-webui-wayland -p anti-webui-wayland-shell --all-features` from a normal terminal.
+- Resolved: the 16 sandbox failures pass outside the sandbox ([Failures on this machine](#failures-on-this-machine)).
 - Which fonts did upstream's machine have for the 4 font-dependent tests? Answer: ask upstream, or find the smallest font set (for example Liberation or Noto) that makes them pass and record it.
 - How do pixel results on lavapipe compare with a real GPU and with DX12 and Metal? Answer: the Phase 4 or Phase 5 CI matrix ([CI plan](../quality/ci-and-quality-services.md)).
 - Do the `harness = false` macOS and Windows test binaries pass on real devices? Answer: A5 and the device question in the [audit plan](phase-1-audit-plan.md#limits-of-this-machine).
