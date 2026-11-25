@@ -3,7 +3,7 @@
 - Updated: 2026-11-26
 - Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
 - Active change: none
-- Branch and commit: `phase-1-audits`, last audit commit `5496049` (A7), not yet pushed
+- Branch and commit: `phase-1-audits`, last audit commit `5496049` (A7), pushed to `origin`
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
@@ -13,9 +13,8 @@
 
 ## Remaining work
 
-1. Push `phase-1-audits` (`agent-git push`).
-2. A5 platform matrix (`research/audit-platform-matrix.md`), then A8 and A9 in plan order.
-3. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
+1. A5 platform matrix (`research/audit-platform-matrix.md`), then A8 and A9 in plan order.
+2. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
 
 ## Modified files
 
