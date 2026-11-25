@@ -35,7 +35,7 @@
 - The agent sandbox sets `RUSTC_WRAPPER=""` (`~/.config/agent-guard/env`), so agent builds bypass Kache; builds in the maintainer's terminal use it. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
 - `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
 - No macOS Rust target is installed, so Clippy has not seen `anti-webui-macos`; A5 needs `rustup target add aarch64-apple-darwin` (network) to try a cross-check.
-- Whether to propose the `setter!` f32 fix upstream needs the maintainer's decision ([A7 open questions](research/audit-baseline-quality.md#open-questions)).
+- The `setter!` f32 fix is not proposed upstream (maintainer, 2026-11-26); the fork's style API handles it ([A7](research/audit-baseline-quality.md#the-f32-literal-fallback)).
 - Carry to Phase 2: the verification steps in Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity. Also using the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks (Kani `cover!`, reachability checks for Quint or Stateright, bounded results labelled with their bound) go to the Phase 4 spikes.
 - Real macOS and Windows devices for A5 and A9: availability unknown.
 - Open questions from Phase 0 still stand ([plan](quality/ci-and-quality-services.md), [decision log](decisions/README.md#decisions-awaiting-confirmation)).

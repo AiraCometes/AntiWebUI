@@ -88,7 +88,7 @@ jscpd's default minimum is 50 tokens; 100 was used to leave out short builder ch
 - Status: present (a defect that will become a build failure)
 - Evidence: the `setter!` macro (`src/anti-webui-style/src/styled.rs:3`–`15`) generates `fn $method(mut self, v: impl Into<$ty>)`. For the setters whose type is `f32`, such as `p` (`styled.rs:124`), `rounded` (`:159`), `opacity` (`:184`), and `text_size` (`:197`), a literal like `.p(4.0)` has no type of its own: `f64: Into<f32>` does not hold, so rustc falls back to `f32`. rustc 1.99 warns: "this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release", with a pointer to rust-lang/rust#154024 and the fix `4.0_f32`.
 - Behaviour: the 1,109 warnings are all calls with a float literal. The most common methods are `rounded` (200), `gap` (171), `p` (125), `text_size` (103), `opacity` (88), `px` (75), and `border` (70). Every example, test, and widget that styles a view is affected, and so is every downstream user of the builder API.
-- Quality notes: the fix belongs in the macro, not at the 1,109 call sites. Making the `f32` setters take `f32` directly types the literal; it breaks only callers that pass another type with `Into<f32>`, such as `u8` or `i16`. That is an API decision for upstream or for the fork's style API.
+- Quality notes: the fix belongs in the macro, not at the 1,109 call sites. Making the `f32` setters take `f32` directly types the literal; it breaks only callers that pass another type with `Into<f32>`, such as `u8` or `i16`. The maintainer decided on 2026-11-26 not to propose the fix upstream; the fork settles it in its own style API.
 - Label: Confirmed (cause and counts); Inferred (that a macro change fixes every site, from the macro being the only generic parameter on these paths); Unverified (the Rust release that makes it an error; rust-lang/rust#154024 would say)
 
 ### `unsafe` code
@@ -212,7 +212,6 @@ These are the numbers fork changes must not make worse. Each is repeatable with 
 ## Open questions
 
 - Which Rust release turns `float_literal_f32_fallback` into an error? Answered by rust-lang/rust#154024 and the release notes. It sets how long the toolchain pin can lag.
-- Does upstream want the `setter!` fix? Answered by asking upstream (needs the maintainer's approval to contact them, per [AGENTS.md](../../../AGENTS.md#upstream)).
 - What does Clippy say about `anti-webui-macos`? Answered by `rustup target add aarch64-apple-darwin` and a Clippy run with `--target aarch64-apple-darwin`, if the `objc2` build scripts allow cross-checking; otherwise on a Mac (A5).
 - Which of the six core functions above CCN 50 have untested branches? Answered by branch coverage (`cargo llvm-cov --branch`, nightly) or a mutation run scoped to those functions.
 
