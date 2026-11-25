@@ -33,7 +33,7 @@ fractional-scaling handling; the integer physical-pixel model; the layout engine
 ## Setup before the first workstream
 
 1. Pin the Phase 1 tools in `mise.toml`: cargo-modules, cargo-deny, cargo-nextest, cargo-llvm-cov, cargo-bloat, and samply. This changes `mise.toml`, so it needs a `verify-commits accept` and a host `mise install`.
-2. Decide whether to try OpenLore (formerly spec-gen) for the inventory. Use it only if A4a takes more than one session by hand.
+2. OpenLore (formerly spec-gen): use it where it works, as a navigation aid (maintainer, 2026-11-25). Build the index with `mise run audit:index`.
 
 ## Limits of this machine
 
