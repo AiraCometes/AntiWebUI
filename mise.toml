@@ -19,6 +19,12 @@ cargo-nextest = "0.9.152"
 "aqua:taiki-e/cargo-llvm-cov" = "0.9.2"
 "cargo:cargo-bloat" = "0.12.1"
 "aqua:mstange/samply" = "0.13.1"
+# Report-only Rust checks: their tasks print findings and never fail (tool-adoption-matrix.md).
+"github:Boshen/cargo-shear" = "1.14.1"
+# cargo-gevatter downloads its matching gevatter_driver and a Rust toolchain into ~/.gevatter on first run.
+"cargo:cargo-gevatter" = "0.1.5"
+# Code index for audit navigation; CLI only. `openlore install`, `connect`, `setup`, and hooks are not used.
+"npm:openlore" = "3.8.0"
 
 [tasks."docs:lint"]
 description = "Lint fork-owned Markdown"
@@ -43,6 +49,19 @@ run = "taplo fmt --check"
 [tasks."spec:validate"]
 description = "Validate all OpenSpec specs and changes"
 run = "openspec validate --all --strict --no-interactive"
+
+# Report-only tasks: they print findings but never fail, and stay out of `check` and the hk hooks.
+[tasks."quality:unused-deps"]
+description = "Report unused dependencies with cargo-shear (report-only)"
+run = "cargo shear --locked || true"
+
+[tasks."quality:lifetimes"]
+description = "Report fixable lifetime annotations with Gevatter (report-only; never applies fixes)"
+run = "cargo gevatter check --allow-fixable -- --workspace --locked"
+
+[tasks."audit:index"]
+description = "Build the OpenLore code index in .openlore/ (local only, no LLM, no embeddings)"
+run = ["test -f .openlore/config.json || openlore init", "openlore analyze --no-embed"]
 
 [tasks.check]
 description = "Run every fast fork check (no network)"

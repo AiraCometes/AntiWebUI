@@ -9,7 +9,7 @@
 
 All 21 workspace crates in `Cargo.toml`: crate layers, features, optional and target-specific dependencies, external dependency counts and duplicates, crate and module cycles, and the dependencies from `anti-webui-core` to GPU or OS crates. The upstream layer rules in `docs/design/00-overview.md` ("レイヤー構成") are the yardstick.
 
-Left out: licences (A2), the wgpu fork itself (A3), what each crate does (A4a–A4c), and whether each platform builds (A5). Unused dependencies were not checked, because no tool for it is pinned (see [open questions](#open-questions)).
+Left out: licences (A2), the wgpu fork itself (A3), what each crate does (A4a–A4c), and whether each platform builds (A5). Unused dependencies were checked later the same day with cargo-shear, once it was pinned.
 
 ## Method
 
@@ -23,6 +23,7 @@ Toolchain: cargo and rustc 1.99.0 on Linux x86_64 (WSL2). Tools pinned in `mise.
 | Duplicate versions | `cargo tree --workspace -d -e normal --target x86_64-unknown-linux-gnu` |
 | Module graph | `cargo modules dependencies -p <crate> --lib --no-externs --no-sysroot` (with `--target` for the macOS and Windows backends) |
 | Which core modules other crates use | `rg -o 'anti_webui_core::[a-z_]+' src/<crate>/src` (a lower bound: grouped `use` lists count once) |
+| Unused dependencies | `cargo shear --locked` (cargo-shear 1.14.1; `mise run quality:unused-deps`) |
 | Feature extremes build | `cargo check --locked` with `-p anti-webui-core --no-default-features`, `-p anti-webui-app --no-default-features`, `-p anti-webui --no-default-features`, `-p anti-webui --all-features`, and `--workspace --all-features` |
 
 Module cycles: `cargo modules … --acyclic` stops at the first cycle, and that cycle is always a type and its own method (for example `tree::NodeId` and `tree::NodeId::from`). So the graph was collapsed instead. Each item node was mapped to its nearest enclosing module, only `uses` edges were kept, and edges between a module and its own ancestor or descendant were dropped. The strongly connected components of that module graph are the module cycles reported below.
@@ -127,6 +128,23 @@ Reading: core reaches the OS only for font discovery and allocator tuning, and i
 - 17 crate names have more than one version. Most second copies come from the PDF (`hayro`), math (`ratex`), and Markdown (`merman`) crates. The text stack and the workspace pin share one `read-fonts` (0.41.0).
 - Label: Confirmed
 
+### Unused dependencies
+
+- Status: present
+- Evidence: `cargo shear --locked` reports 7 findings, and `rg` over each crate's `src` was used to check them.
+
+| Manifest | Dependency | Reading |
+|---|---|---|
+| `src/anti-webui-code/Cargo.toml` | `anti-webui-widgets` | No `anti_webui_widgets` reference in `src/anti-webui-code/src`; likely unused (Confirmed: no reference) |
+| `src/anti-webui-wayland-shell/Cargo.toml` | `bitflags` | No `bitflags` reference in its `src`; likely unused (Confirmed: no reference) |
+| `src/anti-webui-wayland/Cargo.toml`, `src/anti-webui-wayland-shell/Cargo.toml` | `wayland-backend` | Not named in code, but it turns on the `client_system` feature for `wayland-client`; likely a false positive (Inferred) |
+| `Cargo.toml` `[workspace.dependencies]` | `wayland-backend` | Follows from the row above (Inferred) |
+| `src/anti-webui-windows/Cargo.toml` | `windows-core` | The manifest says it is for `#[implement]`, and `src/anti-webui-windows/src/manipulation.rs` uses `windows::core::implement`, whose expansion needs `windows-core`; likely a false positive (Inferred) |
+| `Cargo.toml` `[workspace.dependencies]` | `windows-core` | Follows from the row above (Inferred) |
+
+- Removing any of them changes upstream-owned manifests, so this audit only records them.
+- Label: Confirmed (the findings); Inferred (the readings, as marked)
+
 ### Crate cycles
 
 - Status: absent (no cycles)
@@ -178,7 +196,7 @@ Fork changes must not add to these numbers until Phase 3 replaces them with fork
 
 ## Open questions
 
-- Are there unused dependencies? Answered by cargo-shear or cargo-machete, which the [tool adoption matrix](../quality/tool-adoption-matrix.md) plans for later.
+- Are the two likely-unused dependencies (`anti-webui-code` → `anti-webui-widgets`, `anti-webui-wayland-shell` → `bitflags`) really unused on every target? Answered by removing each one and running `cargo check --target <triple>` for Linux, Windows, and macOS.
 - Do the Windows and macOS builds of core have the same module graph? The `cfg(windows)` and `cfg(unix)` branches are small, but core was analysed only for Linux. Answered by `cargo modules dependencies -p anti-webui-core --target <triple>`.
 - Which core OS reach can move behind a trait or a feature, for example font discovery? Phase 3 decides, using A4a's findings on text.
 
