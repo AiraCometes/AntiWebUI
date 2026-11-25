@@ -26,6 +26,7 @@ Documents owned by this fork. Upstream documents stay in [`docs/design/`](../des
 | [Audit A3: wgpu fork](research/audit-wgpu-fork.md) | What `bea4dev/wgpu` changes against v30.0.1, where it is used, build without it, maintenance cost, upstream wgpu state |
 | [Audit A4a: core capabilities](research/audit-capabilities-core.md) | Reactivity, node tree, styles, layout and the pixel model, text, editing and IME, transforms, input, scrolling; taffy fixture counts; state machines |
 | [Audit A4b: rendering capabilities](research/audit-capabilities-rendering.md) | wgpu renderer, damage tracking, layers and texture caches, glyph atlas, GPU canvas, shaders and filters, animation, frame pacing, GPU-dependent tests |
+| [Audit A4c: platform capabilities](research/audit-capabilities-platform.md) | Platform abstraction, Wayland, X11, macOS, and Windows backends, multi-window, accessibility, drag and drop, fullscreen, IME, clipboard, cursor, scale, wayland-shell |
 | [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md) | taffy as a differential layout oracle; proptest-state-machine, Quint + ITF, Stateright, Loom, and Shuttle for state transitions and concurrency |
 | [Templates](templates/) | Constitution, audit, competitor analysis, gap analysis, spike, benchmark report, ADR, handoff |
 
