@@ -1,0 +1,8 @@
+# Fork-owned toolchain pin. 1.99.0 is the stable release the Phase 1 audits were run with.
+# See docs/fork/quality/tool-adoption-matrix.md. Cargo subcommands (nextest, deny, llvm-cov, ...)
+# stay in mise.toml; only rustup components and targets belong here.
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+components = ["rustfmt", "clippy", "llvm-tools"]
+targets = ["x86_64-pc-windows-msvc"]
