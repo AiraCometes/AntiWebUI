@@ -3,7 +3,7 @@
 - Updated: 2026-11-26
 - Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
 - Active change: none
-- Branch and commit: `phase-1-audits`, last audit commit `cb4df73` (A6); `8cf5299` and later are not yet pushed
+- Branch and commit: `phase-1-audits`, last audit commit `cb4df73` (A6), pushed to `origin`
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
@@ -14,9 +14,8 @@
 
 ## Remaining work
 
-1. Push `phase-1-audits` (`/home/airacometes/.config/agent-guard/agent-git push origin phase-1-audits`); earlier pushes failed on a proxy error.
-2. A7 baseline quality (Clippy, rustfmt, `unsafe`, complexity, duplication, the `float_literal_f32_fallback` warnings A6 saw), then A5, A8, and A9 in plan order.
-3. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
+1. A7 baseline quality (Clippy, rustfmt, `unsafe`, complexity, duplication, the `float_literal_f32_fallback` warnings A6 saw), then A5, A8, and A9 in plan order.
+2. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
 
 ## Modified files
 
