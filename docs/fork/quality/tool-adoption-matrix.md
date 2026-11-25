@@ -1,6 +1,6 @@
 # Tool adoption matrix
 
-Status as of 2026-11-24. `mise.toml` pins the versions; this file records why each tool is or is not used. Every tool here is development-only and never becomes a runtime dependency of a product crate.
+Status as of 2026-11-24; Phase 1 audit tools pinned on 2026-11-25. `mise.toml` pins the versions; this file records why each tool is or is not used. Every tool here is development-only and never becomes a runtime dependency of a product crate.
 
 Version and licence data come from the GitHub releases API and the crates.io API on 2026-11-24 (Confirmed). "Local" is what this machine has: `pinned` means `mise.toml` pins it, `available` means installed but not pinned for this repository, and `—` means not installed. The platform column is Unverified unless marked; Phase 5 confirms platforms per CI runner.
 
@@ -28,16 +28,16 @@ Adoption phases follow the [quality gates](#quality-gate-tiers): commit, pull re
 | rust-analyzer | IDE | — | MIT/Apache-2.0 | not on the active toolchain | Editor setup, not a gate | when needed | — |
 | cargo xtask | Rust-specific automation behind mise tasks | — | — | — | A new workspace member edits upstream `Cargo.toml`; add it with the first Rust-only task | 5 | — |
 | cargo metadata | Dependency graph source for fitness functions | with cargo | — | available | Reads the graph for architecture tests | 5 | pull request |
-| cargo-modules | Module graph, cycle detection | 0.28.0 | MPL-2.0 | — | Phase 1 dependency analysis | 1 | phase completion |
-| cargo-deny | Licences, advisories, bans, sources | 0.22.0 latest; 0.20.2 local | Apache-2.0 | available | Licence audit in Phase 1; `deny.toml` needs a `verify-commits accept` | 1, 5 | pull request |
+| cargo-modules | Module graph, cycle detection | 0.28.0 | MPL-2.0 | pinned | Phase 1 dependency analysis | 1 | phase completion |
+| cargo-deny | Licences, advisories, bans, sources | 0.22.0 pinned | Apache-2.0 | pinned | Licence audit in Phase 1; `deny.toml` needs a `verify-commits accept` | 1, 5 | pull request |
 | cargo-shear | Unused dependencies | 1.14.1 | MIT | available | Chosen over cargo-machete; use one, not both | 5 | pull request |
 | cargo-machete | Unused dependencies | 0.10.1 | MIT | available | Overlaps cargo-shear | dropped | — |
 | cargo-hack | Feature matrix | 0.6.46 | Apache-2.0 | — | Many features (`wayland`, `x11`, `macos`, `windows`, `svg`, `video`, …) | 5 | critical change |
 | rust-code-analysis | Complexity metrics | 0.0.25 (2023-01-13) | MPL-2.0 | — | Superseded by SonarQube Cloud | dropped | — |
 | jscpd | Duplicate code | 5.4.3 | MIT | — | Superseded by SonarQube Cloud | dropped | — |
 | cargo-semver-checks | Public API compatibility | 0.51.0 | Apache-2.0 | — | Meaningful once a public API is declared | 7 | pull request |
-| cargo-nextest | Test runner | 0.9.152 | Apache-2.0 | available | Check GPU tests that pass by skipping (see the [inspection](../research/phase-0-inspection.md#code-size-tests-and-benchmarks)) | 1, 5 | pull request |
-| cargo-llvm-cov | Coverage | 0.9.2 latest; 0.9.1 local | Apache-2.0 | available | Baseline in Phase 1 | 1 | phase completion |
+| cargo-nextest | Test runner | 0.9.152 | Apache-2.0 | pinned | Check GPU tests that pass by skipping (see the [inspection](../research/phase-0-inspection.md#code-size-tests-and-benchmarks)) | 1, 5 | pull request |
+| cargo-llvm-cov | Coverage | 0.9.2 pinned | Apache-2.0 | pinned | Baseline in Phase 1 | 1 | phase completion |
 | cargo-mutants | Mutation testing | 27.1.0 | MIT | available | Changed files only on critical changes | 5 | critical change |
 | proptest | Property tests (dev-dependency) | 1.12.0 | MIT OR Apache-2.0 | — | dev-dependency only | 6 | — |
 | insta | Snapshot tests (dev-dependency) | 1.49.0 | Apache-2.0 | — | dev-dependency only | 6 | — |
@@ -49,9 +49,10 @@ Adoption phases follow the [quality gates](#quality-gate-tiers): commit, pull re
 | Criterion | Micro-benchmarks | 0.8.2 | Apache-2.0 OR MIT | — | Choose one of Criterion and Divan in a Phase 4 spike | 4 | — |
 | Divan | Micro-benchmarks | 0.1.21 (2025-04-10) | MIT OR Apache-2.0 | — | Last release is old | 4 | — |
 | Tracy | Frame profiler | 0.15.0 | BSD-3-Clause | — | Feature-gated client crate only | 4 | — |
-| samply | Sampling profiler | 0.13.1 | MIT OR Apache-2.0 | — | Local profiling | 1 | — |
+| samply | Sampling profiler | 0.13.1 | MIT OR Apache-2.0 | pinned | Local profiling | 1 | — |
 | RenderDoc | GPU frame capture | 1.47 | MIT | — | No macOS support (Unverified) | 4 | — |
-| cargo-bloat | Binary size breakdown | 0.12.1 (2024-05-10) | MIT | available | Baseline binary size in Phase 1 | 1 | phase completion |
+| cargo-bloat | Binary size breakdown | 0.12.1 (2024-05-10) | MIT | pinned | Baseline binary size in Phase 1 | 1 | phase completion |
+| cargo-binstall | Installs prebuilt crate binaries for mise `cargo:` tools | 1.28.0 (2026-11-21) | GPL-3.0-only | pinned | Development-only installer, never linked into a crate. cargo-modules has no prebuilt binary and builds from source (about 3.5 min) | 1 | — |
 | Allocation counter | Zero hot-path allocation checks | `allocation-counter` 0.8.1, `stats_alloc` 0.1.10, `dhat` 0.3.3, or a small in-repo global allocator | MIT/Apache-2.0 | — | All three crates are old; a test-only allocator may be simpler | 5 (decide) | pull request |
 | Vale | Prose style | 3.28.1 | MIT | — | Add only if rumdl and review miss real problems | 5 (evaluate) | commit |
 | mdBook | Docs site generator (Docs as Code) | 0.5.4 | MPL-2.0 | — | First candidate; choose the generator in Phase 5 ([documentation policy](../documentation-policy.md#docs-as-code)) | 5 | pull request |

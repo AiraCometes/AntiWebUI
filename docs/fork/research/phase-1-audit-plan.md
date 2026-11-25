@@ -1,6 +1,6 @@
 # Phase 1 audit plan
 
-- Status: proposed. Phase 1 starts only after the maintainer approves it.
+- Status: approved by the maintainer on 2026-11-25.
 - Baseline: upstream `6908e3119db4ecf7080f57de59870e083f2cbc98` ([ADR-0002](../decisions/0002-track-upstream-as-a-soft-fork.md)). If upstream moves during Phase 1, finish the audit on this commit, then record a delta for the new commits.
 - Output template: [technical-audit](../templates/technical-audit.md). Measurements use the [benchmark-report](../templates/benchmark-report.md) template.
 
