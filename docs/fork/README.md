@@ -30,6 +30,7 @@ Documents owned by this fork. Upstream documents stay in [`docs/design/`](../des
 | [Audit A5: platform matrix](research/audit-platform-matrix.md) | What builds, runs, and is tested per OS and display server; cross-checks for Windows and macOS; backend choice at run time; feature and cfg gates |
 | [Audit A6: tests](research/audit-tests.md) | Test inventory per crate, results and failures on Linux, GPU skip behaviour, run time, line coverage, the oracle of each test file, a mutation sample |
 | [Audit A7: baseline quality](research/audit-baseline-quality.md) | rustfmt and Clippy baselines, the f32 literal fallback, `unsafe` and `SAFETY:` counts, lint suppressions, complexity, duplication |
+| [Audit A8: upstream design documents](research/audit-design-docs.md) | An English summary of each `docs/design` file, how far the code matches it, its limits and open items; the open items in `07-roadmap.md`; stale statements |
 | [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md) | taffy as a differential layout oracle; proptest-state-machine, Quint + ITF, Stateright, Loom, and Shuttle for state transitions and concurrency |
 | [Templates](templates/) | Constitution, audit, competitor analysis, gap analysis, spike, benchmark report, ADR, handoff |
 
