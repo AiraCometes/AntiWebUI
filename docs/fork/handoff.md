@@ -3,11 +3,12 @@
 - Updated: 2026-11-26
 - Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
 - Active change: none
-- Branch and commit: `phase-1-audits`, last audit commit `633c627` (A8), pushed to `origin`
+- Branch and commit: `phase-1-audits`, A9 committed on top of A8, pushed to `origin`
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
 
+- A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): cold dev build 58 s and cold release 149 s at `jobs = 4`; `showcase` 21.0 MB stripped; headless frame costs on llvmpipe (a text change at 20,000 rows is 18.5 ms, mostly layout). Windowed metrics are pending a run of `benchmarks/phase1/windowed.py` in a desktop session.
 - Japanese edition policy added to the [documentation policy](documentation-policy.md#japanese-edition): English is the master, the Japanese edition matches it in content and structure, checked by a machine; timing and location are open (maintainer, 2026-11-26).
 - [ADR-0007](decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md): `docs/design` stays unchanged while soft-forked; the fork takes it over at the hard fork, and keeps adopting upstream features after it without duplication (maintainer, 2026-11-26).
 - A8 [upstream design documents](research/audit-design-docs.md) (`633c627`), drafted by Pi in three parts and merged: 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements are tabled, and the open items of `07-roadmap.md` are listed with their status.
@@ -19,8 +20,9 @@
 
 ## Remaining work
 
-1. A9 baseline measurements (`performance/<date>-upstream-baseline.md`), the last Phase 1 workstream.
-2. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
+1. The maintainer runs `benchmarks/phase1/windowed.py` from a desktop terminal (commands in the [A9 report](performance/2026-11-26-upstream-baseline.md#pending-windowed-measurements)); add the results to the report.
+2. Phase 1 exit: name the Phase 2 starting point here, and ask the maintainer to approve moving to Phase 2 ([exit criteria](research/phase-1-audit-plan.md#exit-criteria)).
+3. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
 
 ## Modified files
 
@@ -55,4 +57,4 @@
 
 ## Recommended next action
 
-Run A9 from the [benchmark-report template](templates/benchmark-report.md): `cargo build --timings` cold and warm, example binary sizes with cargo-bloat, and what this machine can run (headless rendering on lavapipe; windows only from the maintainer's terminal, since the sandbox cannot reach the WSLg compositor, see [A5](research/audit-platform-matrix.md#method)). Ask the maintainer to run the windowed measurements outside the sandbox.
+With the windowed results in, check the [Phase 1 exit criteria](research/phase-1-audit-plan.md#exit-criteria), write the Phase 2 starting point here, and open the audit pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` once the maintainer wants it reviewed.
