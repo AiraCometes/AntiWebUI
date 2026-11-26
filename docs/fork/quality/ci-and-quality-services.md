@@ -90,7 +90,7 @@ Plan (Proposed):
 
 | Item | Finding | Label |
 |---|---|---|
-| Release | `kunobi-ninja/kache` v2.3.0, 2026-11-21, Apache-2.0 | Confirmed (GitHub API) |
+| Release | `kunobi-ninja/kache` v2.3.1, 2026-11-25, Apache-2.0; the Linux archive holds `kache` and `kache-engine` side by side | Confirmed (GitHub API; archive listing and SHA-256 checked 2026-11-26) |
 | Remotes | S3, GCS, a shared filesystem, or an OCI registry such as GHCR (`[cache.remote] type = "oci"`, `repository = "ghcr.io/<owner>/<name>"`) | Confirmed (Kache docs, "OCI registry setup") |
 | CI credentials | `KACHE_OCI_TOKEN`, or `KACHE_OCI_USERNAME` with `KACHE_OCI_PASSWORD`; leave them unset, not empty, in jobs without the secret | Confirmed (same page) |
 | Who writes | On GitHub Actions, a push to a protected branch writes; other jobs read only. Scheduled and merge-queue jobs write only when listed in `KACHE_GITHUB_WRITES`. Pull request jobs on an OCI remote are always read-only | Confirmed (Kache docs, "CI setup") |
@@ -102,7 +102,7 @@ Plan (Proposed):
 
 ### Plan (Proposed)
 
-- Local: pin Kache in `mise.toml` and run `kache init`; set a disk budget for the local store.
+- Local: in use since Phase 1, installed per user with `kache init`, a 20 GiB budget, and the store on the same copy-on-write filesystem as the working trees ([tool matrix](tool-adoption-matrix.md)). Whether the repository also pins it in `mise.toml` is settled with CI in Phase 5.
 - CI: `kunobi-ninja/kache-action` with a pinned version, the OCI remote `ghcr.io/airacometes/antiwebui-kache` (a dedicated package), and `cache-executables: true` where it helps. Only pushes to `main` and a scheduled warm-up job write.
 - Cleanup: a scheduled workflow that lists the package's versions through the REST API and deletes every version older than N days, regardless of tag. A script is needed because the action selects by count and caps each run at 100.
 - The Phase 4 build-cache spike measures cold and warm builds on all three runners, the hit rate, the tag count after a week, and listing time, and picks N.

@@ -17,6 +17,16 @@ Documents are written, managed, and published the same way as code (maintainer d
 - English is canonical for technical documents, OpenSpec artifacts, architecture documents, ADRs, `AGENTS.md`, `CLAUDE.md`, source comments, rustdoc, commit messages, issues, and pull requests.
 - Conversation with the maintainer may be in Japanese. Anything decided in conversation is written down here in English before it counts.
 
+### Japanese edition
+
+The fork will publish a Japanese edition of its documents (maintainer direction, 2026-11-26). When it starts, where it lives, and which documents it covers are not decided yet ([decision log](decisions/README.md#decisions-awaiting-confirmation)).
+
+- The English document is the master. The Japanese edition is derived from it and is never canonical: when the two disagree, the English one wins and the Japanese one is fixed.
+- The two must be the same in content and in structure: the same headings in the same order, the same sections, lists, tables, code blocks, links and anchors, and the same evidence label on each claim. Nothing is added, dropped, or summarised in translation.
+- That sameness is checked by a machine, not by review alone. Proposed: a mise task that parses both files and compares the heading tree, the count and order of tables, lists, and code blocks, the link targets, and the evidence labels, and that fails when the Japanese file is older than its English master.
+- The Japanese text is polished with a Japanese rewriting skill such as `nanaism/yomiyasu`, which keeps meaning and conditions while fixing unnatural phrasing. Polishing never changes the structure the check compares.
+- A change to an English document updates its Japanese edition in the same pull request, or the check reports the edition as out of date.
+
 ## Format
 
 - GitHub Flavored Markdown, UTF-8, LF line endings.

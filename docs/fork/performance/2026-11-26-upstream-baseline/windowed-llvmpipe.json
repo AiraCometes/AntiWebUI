@@ -1,0 +1,349 @@
+{
+ "environment": {
+  "XDG_SESSION_TYPE": null,
+  "WAYLAND_DISPLAY": "wayland-0",
+  "DISPLAY": ":0"
+ },
+ "results": [
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n337 frames: 337 shown, 0 discarded; 337 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.68    33.84\nui              0.07     0.10     0.15     0.16\ndiff            0.01     0.01     0.02     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          2.58     3.57     4.21     7.44\ncpu total       2.67     3.67     4.30     7.54\nheld            0.00     0.00     0.00     0.00\nlatency        24.03    24.36    24.61    98.07\ninterval       17.12    17.49    47.69    48.96\nshown-cb       -6.91    -6.73    -6.65    -6.63\nstep error      0.24     1.00     3.13    74.04\ncontinuous frames 329: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 337,
+   "startup_ms": 152.112718,
+   "frame_ms": {
+    "median": 24.028735,
+    "p95": 24.365035900000002,
+    "p99": 24.59013413,
+    "n": 332
+   },
+   "rss_idle_kib": 117804,
+   "rss_peak_kib": 117804,
+   "idle_wakeups_per_s": 67.1051298271444,
+   "idle_presents": 0,
+   "idle_window_s": 8.002368841
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n341 frames: 341 shown, 0 discarded; 341 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    17.01    33.67\nui              0.07     0.11     0.18     0.39\ndiff            0.01     0.01     0.02     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          2.20     3.23     4.65     7.26\ncpu total       2.28     3.33     4.72     7.34\nheld            0.00     0.00     0.00     0.00\nlatency        23.92    24.35    24.62    76.48\ninterval       17.01    17.48    29.68    48.25\nshown-cb       -6.92    -6.72    -6.66    -6.55\nstep error      0.26     1.36     4.67    52.53\ncontinuous frames 333: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 341,
+   "startup_ms": 149.139461,
+   "frame_ms": {
+    "median": 23.918833,
+    "p95": 24.33515925,
+    "p99": 24.5256957,
+    "n": 336
+   },
+   "rss_idle_kib": 117536,
+   "rss_peak_kib": 117536,
+   "idle_wakeups_per_s": 59.981177246787006,
+   "idle_presents": 0,
+   "idle_window_s": 8.002510488
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n340 frames: 340 shown, 0 discarded; 340 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    17.06    33.64\nui              0.07     0.11     0.15     0.25\ndiff            0.01     0.01     0.02     0.06\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          2.46     3.22     3.99     6.94\ncpu total       2.54     3.33     4.06     7.04\nheld            0.00     0.00     0.00     0.00\nlatency        24.04    24.44    24.69    74.55\ninterval       17.11    17.58    29.69    48.11\nshown-cb       -6.92    -6.75    -6.68    -6.63\nstep error      0.27     1.11     4.93    51.00\ncontinuous frames 332: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 340,
+   "startup_ms": 147.647357,
+   "frame_ms": {
+    "median": 24.039973,
+    "p95": 24.44210965,
+    "p99": 24.66720403,
+    "n": 334
+   },
+   "rss_idle_kib": 117492,
+   "rss_peak_kib": 117492,
+   "idle_wakeups_per_s": 60.09910631506892,
+   "idle_presents": 0,
+   "idle_window_s": 8.003446798
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n336 frames: 336 shown, 0 discarded; 336 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.66    33.74\nui              0.08     0.11     0.14     0.22\ndiff            0.01     0.01     0.02     0.04\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          2.65     3.39     4.16     7.33\ncpu total       2.74     3.49     4.27     7.41\nheld            0.00     0.00     0.00     0.00\nlatency        24.02    24.50    24.66   100.08\ninterval       17.14    17.61    46.81    48.41\nshown-cb       -6.91    -6.72    -6.65    -6.58\nstep error      0.30     0.96     3.90    76.46\ncontinuous frames 329: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 336,
+   "startup_ms": 171.41843,
+   "frame_ms": {
+    "median": 24.025392,
+    "p95": 24.5032445,
+    "p99": 24.6440855,
+    "n": 331
+   },
+   "rss_idle_kib": 117828,
+   "rss_peak_kib": 117828,
+   "idle_wakeups_per_s": 59.97773195499882,
+   "idle_presents": 0,
+   "idle_window_s": 8.002970175
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n338 frames: 338 shown, 0 discarded; 338 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.03    33.64    33.79\nui              0.07     0.10     0.13     0.18\ndiff            0.01     0.01     0.02     0.02\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          2.54     3.41     4.20     7.85\ncpu total       2.62     3.51     4.29     7.98\nheld            0.00     0.00     0.00     0.00\nlatency        24.00    24.39    24.54    82.75\ninterval       17.10    17.46    47.26    48.56\nshown-cb       -6.93    -6.75    -6.70    -6.66\nstep error      0.26     0.99     3.54    58.38\ncontinuous frames 331: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 338,
+   "startup_ms": 158.326009,
+   "frame_ms": {
+    "median": 24.0009085,
+    "p95": 24.391923050000003,
+    "p99": 24.53212491,
+    "n": 332
+   },
+   "rss_idle_kib": 117616,
+   "rss_peak_kib": 117616,
+   "idle_wakeups_per_s": 59.98217233117064,
+   "idle_presents": 0,
+   "idle_window_s": 8.002377729
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n135 frames: 134 shown, 0 discarded; 135 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.00     0.01     0.02     0.03\nui              0.35     0.52     0.63    49.16\ndiff            0.01     0.02     0.03     0.04\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         32.78    35.09    55.19    79.78\ncpu total      33.25    35.45    55.74   128.95\nheld            0.00     0.00     0.00     0.00\nlatency        50.34    55.32    73.07   201.44\ninterval       43.19    48.10    52.32    66.19\nshown-cb       -6.85    -6.74    -6.72    -6.66\nstep error      2.39     5.19    13.59   128.37\ncontinuous frames 133: 236 refresh(es) skipped; late by CPU 133, CPU+GPU 0, elsewhere 0",
+   "frames": 135,
+   "startup_ms": 286.770908,
+   "frame_ms": {
+    "median": 50.3333465,
+    "p95": 55.3323179,
+    "p99": 68.85423878999997,
+    "n": 132
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n136 frames: 135 shown, 0 discarded; 136 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.01     0.02     0.03\nui              0.34     0.46     0.66    33.38\ndiff            0.02     0.02     0.03     0.06\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         32.98    35.87    49.87    58.73\ncpu total      33.35    36.34    50.52    92.12\nheld            0.00     0.00     0.00     0.00\nlatency        50.80    54.82    72.20   153.32\ninterval       43.62    47.59    49.77    65.14\nshown-cb       -6.86    -6.74    -6.71    -6.71\nstep error      1.93     5.11    19.82    81.12\ncontinuous frames 134: 242 refresh(es) skipped; late by CPU 134, CPU+GPU 0, elsewhere 0",
+   "frames": 136,
+   "startup_ms": 221.12347,
+   "frame_ms": {
+    "median": 50.800164,
+    "p95": 54.9213484,
+    "p99": 67.16979556000011,
+    "n": 133
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n137 frames: 136 shown, 0 discarded; 137 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.01     0.01     0.02\nui              0.35     0.46     0.62    31.90\ndiff            0.01     0.02     0.05     0.06\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         32.83    34.75    43.09    59.27\ncpu total      33.21    35.08    43.53    91.17\nheld            0.00     0.00     0.00     0.00\nlatency        50.49    54.77    60.28   162.13\ninterval       43.34    46.65    50.82    52.17\nshown-cb       -6.86    -6.74    -6.72    -6.68\nstep error      2.15     4.31     9.58   101.85\ncontinuous frames 135: 236 refresh(es) skipped; late by CPU 135, CPU+GPU 0, elsewhere 0",
+   "frames": 137,
+   "startup_ms": 230.103976,
+   "frame_ms": {
+    "median": 50.4505365,
+    "p95": 54.7742124,
+    "p99": 59.865201429999985,
+    "n": 134
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n137 frames: 136 shown, 0 discarded; 137 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.01     0.02     0.03\nui              0.34     0.47     0.74    32.72\ndiff            0.02     0.02     0.06     0.08\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         32.87    35.03    44.76    59.62\ncpu total      33.27    35.39    45.34    92.35\nheld            0.00     0.00     0.00     0.00\nlatency        50.42    54.68    62.53   140.56\ninterval       43.39    46.62    49.30    53.40\nshown-cb       -6.85    -6.75    -6.72    -6.71\nstep error      2.07     5.29     7.18    78.03\ncontinuous frames 135: 241 refresh(es) skipped; late by CPU 135, CPU+GPU 0, elsewhere 0",
+   "frames": 137,
+   "startup_ms": 209.920306,
+   "frame_ms": {
+    "median": 50.4934075,
+    "p95": 54.74711205,
+    "p99": 60.73134649999993,
+    "n": 134
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n135 frames: 134 shown, 0 discarded; 135 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.01     0.02     0.05\nui              0.34     0.48     0.70    32.51\ndiff            0.01     0.02     0.03     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         33.11    38.30    48.99    59.99\ncpu total      33.47    38.67    49.34    92.51\nheld            0.00     0.00     0.00     0.00\nlatency        52.32    56.21    66.09   146.83\ninterval       43.99    48.79    52.55    58.10\nshown-cb       -6.86    -6.75    -6.72    -6.67\nstep error      2.15     5.34    13.60    80.74\ncontinuous frames 133: 244 refresh(es) skipped; late by CPU 133, CPU+GPU 0, elsewhere 0",
+   "frames": 135,
+   "startup_ms": 213.896985,
+   "frame_ms": {
+    "median": 52.316018,
+    "p95": 56.54080904999999,
+    "p99": 64.19608688999999,
+    "n": 132
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n324 frames: 323 shown, 0 discarded; 324 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.02     0.03     0.08     0.16\nui              1.40     1.83     2.47     2.75\ndiff            0.33     0.53     0.62     0.65\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          7.77     9.88    10.25    58.79\ncpu total       9.62    12.14    12.59    60.33\nheld            0.00     0.00     0.00     0.00\nlatency        25.29    30.22    30.62   119.00\ninterval       17.36    20.55    20.83    21.25\nshown-cb       -7.04    -6.66    -6.59    -5.71\nstep error      0.39     3.25     3.74    95.98\ncontinuous frames 322: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 324,
+   "startup_ms": 204.293184,
+   "frame_ms": {
+    "median": 25.196136,
+    "p95": 30.225551199999998,
+    "p99": 30.606229539999998,
+    "n": 319
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n327 frames: 326 shown, 0 discarded; 327 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.02     0.03     0.04     0.10\nui              1.43     1.98     2.63     2.72\ndiff            0.33     0.56     0.69     0.75\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          8.28    10.01    10.31    15.25\ncpu total      10.47    12.43    12.97    16.78\nheld            0.00     0.00     0.00     0.00\nlatency        24.76    30.33    30.67    86.70\ninterval       17.28    20.65    20.89    21.10\nshown-cb       -7.01    -6.68    -6.62    -6.60\nstep error      0.32     3.33     3.69    63.72\ncontinuous frames 325: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 327,
+   "startup_ms": 140.501608,
+   "frame_ms": {
+    "median": 24.669677,
+    "p95": 30.3291398,
+    "p99": 30.66913012,
+    "n": 323
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n324 frames: 323 shown, 0 discarded; 324 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.02     0.02     0.03     0.12\nui              1.45     1.87     2.62     2.83\ndiff            0.36     0.58     0.69     0.74\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          8.97     9.99    10.30    15.71\ncpu total      11.11    12.42    12.68    17.26\nheld            0.00     0.00     0.00     0.00\nlatency        26.65    30.29    30.68    65.89\ninterval       17.48    20.63    20.81    20.99\nshown-cb       -7.08    -6.66    -6.56    -5.78\nstep error      0.43     3.33     3.66    42.77\ncontinuous frames 322: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 324,
+   "startup_ms": 122.241969,
+   "frame_ms": {
+    "median": 26.545996,
+    "p95": 30.304600599999997,
+    "p99": 30.67213436,
+    "n": 319
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n321 frames: 320 shown, 0 discarded; 321 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.02     0.02     0.03     0.13\nui              1.44     1.84     2.37     2.75\ndiff            0.34     0.57     0.70     0.78\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          8.25     9.17     9.49    15.28\ncpu total      10.39    11.46    12.13    16.81\nheld            0.00     0.00     0.00     0.00\nlatency        27.51    29.57    29.93    65.68\ninterval       19.26    20.23    20.59    20.77\nshown-cb       -8.59    -6.82    -6.67    -6.60\nstep error      0.35     2.61     3.53    42.64\ncontinuous frames 319: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 321,
+   "startup_ms": 123.715238,
+   "frame_ms": {
+    "median": 27.379648,
+    "p95": 29.571805599999998,
+    "p99": 29.921436559999997,
+    "n": 317
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "[anti-webui] frame stats\nGPU: llvmpipe (LLVM 21.1.8, 256 bits) (Cpu, llvmpipe, Mesa 26.0.8-1ubuntu0.3 (LLVM 21.1.8)), wgpu surface\n323 frames: 322 shown, 0 discarded; 323 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.02     0.03     0.05     0.10\nui              1.45     1.82     2.52     2.84\ndiff            0.36     0.58     0.64     0.67\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          9.05    10.05    10.38    16.12\ncpu total      11.15    12.32    12.63    17.69\nheld            0.00     0.00     0.00     0.00\nlatency        26.56    30.33    30.76    62.75\ninterval       17.53    20.62    20.94    21.58\nshown-cb       -7.11    -6.69    -6.62    -6.57\nstep error      0.44     3.24     3.61    39.68\ncontinuous frames 321: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 323,
+   "startup_ms": 118.458724,
+   "frame_ms": {
+    "median": 26.544795,
+    "p95": 30.3159454,
+    "p99": 30.76148534,
+    "n": 319
+   }
+  }
+ ]
+}

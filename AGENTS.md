@@ -18,7 +18,7 @@ Update [`docs/fork/handoff.md`](docs/fork/handoff.md) from [its template](docs/f
 ## Ownership of files
 
 - Upstream-owned: `src/`, `docs/design/`, `README.md`, `Cargo.toml`, `Cargo.lock`, `image/`, licence files. Keep edits to them small, and list them in the PR description ([ADR-0002](docs/fork/decisions/0002-track-upstream-as-a-soft-fork.md)).
-- Fork-owned: `AGENTS.md`, `CLAUDE.md`, `docs/fork/`, `openspec/`, `mise.toml`, `hk.pkl`, `.rumdl.toml`, `.taplo.toml`, and future fork directories.
+- Fork-owned: `AGENTS.md`, `CLAUDE.md`, `docs/fork/`, `openspec/`, `mise.toml`, `hk.pkl`, `.rumdl.toml`, `.taplo.toml`, `rust-toolchain.toml`, and future fork directories.
 
 ## Writing
 

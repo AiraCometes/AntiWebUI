@@ -10,6 +10,7 @@ Each row is one MADR file in this folder ([ADR-0001](0001-record-decisions-as-ma
 | [0004](0004-english-fork-documentation.md) | Write fork documents in English under docs/fork, and keep upstream documents unchanged | accepted | 2026-11-24 |
 | [0005](0005-minimal-phase-0-toolchain.md) | Start with a documentation-only toolchain in Phase 0 | accepted | 2026-11-24 |
 | [0006](0006-repository-as-the-source-of-truth-for-sessions.md) | Keep agent instructions and session state in the repository | accepted | 2026-11-24 |
+| [0007](0007-upstream-design-documents-across-the-fork-lifecycle.md) | Leave upstream design documents unchanged while soft-forked, take them over at the hard fork, and keep adopting upstream features after it | accepted | 2026-11-26 |
 
 ## Decisions awaiting confirmation
 
@@ -24,6 +25,8 @@ Smaller decisions made in conversation, which are not ADRs yet. Each one becomes
 | Build cache | Kache locally and in CI, with `ghcr.io` as the OCI remote and a scheduled cleanup of old tags ([plan](../quality/ci-and-quality-services.md#build-cache-kache-with-ghcr)) | Maintainer, 2026-11-25 conversation | Phase 4 spike, then ADR |
 | Pull requests to upstream | Whether to send any at all is open; if sent, each one needs the maintainer's approval | Maintainer, 2026-11-24 and 2026-11-25 conversations | Phase 4 |
 | Editing upstream-owned files | Whether fork work may edit upstream-owned files (for example a `cfg(loom)` sync facade in `anti-webui-core`), and how to keep tracking upstream if it does. Until then, fork work uses fork-owned paths and copies | Maintainer, 2026-11-25 conversation | Phase 4 |
+| Japanese edition of fork documents | English is the master; a Japanese edition with the same content and structure, checked by a machine and polished with a skill such as `nanaism/yomiyasu` ([policy](../documentation-policy.md#japanese-edition)). Open: when it starts, where it lives (for example `docs/fork/ja/` mirroring the paths), which documents it covers, and how the site publishes it | Maintainer, 2026-11-26 conversation | Not scheduled; the maintainer decides |
+| Design literature review | The first step of Phase 2, before the gap analysis: read textbook-grade documents and websites on UI framework design and take what applies into the requirements ([roadmap](../roadmap.md#phase-2-requirements-engineering)). Open: the sources and the output format | Maintainer, 2026-11-27 conversation | Start of Phase 2 |
 | Officially supported platforms | Windows, macOS, and Linux as equals (bootstrap brief); the order of manual verification is open | Bootstrap brief | Phase 2 |
 | taffy | Used only as a differential-testing oracle, never as the layout engine | Maintainer, 2026-11-25 conversation | Phase 4 spike, then ADR |
 | State-transition and concurrency testing | Quint Connect is not used. Candidates: proptest-state-machine, Quint + ITF or Stateright, Loom, Shuttle ([evaluation](../research/candidate-test-oracles-and-model-checking.md)) | Maintainer, 2026-11-25 conversation | Phase 4 spikes, then ADR |

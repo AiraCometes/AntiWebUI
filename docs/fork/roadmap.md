@@ -5,7 +5,7 @@ Phase order and status. Moving to the next phase needs the maintainer's approval
 | Phase | Name | Status | Exit condition |
 |---|---|---|---|
 | 0 | Project bootstrap | done (2026-11-25, [#2](https://github.com/AiraCometes/AntiWebUI/pull/2)) | Phase 0 pull request merged |
-| 1 | Upstream audit | in progress (approved 2026-11-25) | [Audit plan](research/phase-1-audit-plan.md) exit criteria met |
+| 1 | Upstream audit | done (2026-11-27) | [Audit plan](research/phase-1-audit-plan.md) exit criteria met |
 | 2 | Requirements engineering | not started | Constitution and master requirements accepted |
 | 3 | Master architecture | not started | arc42 architecture and core ADRs accepted |
 | 4 | Technical validation | not started | Spikes answered; ADRs final |
@@ -23,6 +23,8 @@ Upstream commit pinning, repository and environment inspection, documentation co
 A complete codebase and documentation audit, capability inventory, dependency analysis, platform matrix, licence audit, technical debt, existing tests and benchmarks, and baseline measurements. See the [plan](research/phase-1-audit-plan.md).
 
 ## Phase 2: requirements engineering
+
+Phase 2 starts with a **design literature review** (maintainer, 2026-11-27): read textbook-grade documents and websites on UI framework design, analyse them, and record what applies to the fork. Its findings feed the gap analysis and the requirements: features to add, directions to take, and capabilities to extend beyond what upstream has. The sources and the output format are chosen at the start of the review.
 
 Competitor research, the [gap analysis](templates/gap-analysis.md) (REUSE, EXTEND, OPTIMIZE, NEW, REPLACE, DEFER, DROP), grilling sessions, the project constitution, master requirements, functional and non-functional requirements, and non-goals. The requirement candidates from the bootstrap brief (rendering and GPU, spatial and input, lifecycle and resources, motion, headless UI and accessibility, typography and effects, testing and performance, extensibility) are inputs, not commitments.
 

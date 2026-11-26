@@ -1,57 +1,69 @@
 # Handoff
 
-- Updated: 2026-11-25
-- Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
+- Updated: 2026-11-27
+- Current phase: Phase 1 closed by the maintainer on 2026-11-27; its pull request is [#6](https://github.com/AiraCometes/AntiWebUI/pull/6). Phase 2 is next
 - Active change: none
-- Branch and commit: `phase-1-quality-tools`, based on `a37d69f3a6c8efa8a000891eeeb8ed00fbace20c` (A1 merged as #4)
+- Branch and commit: `phase-1-audits`, pushed to `origin` (the A9 windowed results are the last commit)
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
 
-- A1 merged (#4): [dependency audit](research/audit-dependencies.md).
-- Pinned cargo-shear and Gevatter as report-only tools, with the tasks `quality:unused-deps` and `quality:lifetimes` ([matrix](quality/tool-adoption-matrix.md)).
-- Ran cargo-shear and added its 7 findings to the A1 audit.
-- Ran Gevatter on the workspace: 3 `non_permissive_lifetimes` warnings in `src/anti-webui-pdf/src/edits.rs` (lines 274, 521, 554) and 18 internal `out-of-range` errors; A7 records them as the baseline.
-- Pinned OpenLore 3.8.0 (CLI only) with the task `audit:index`; the maintainer chose to use it where it works.
+- Phase 1 closed (maintainer, 2026-11-27). Phase 2 starts with a design literature review, whose findings feed the gap analysis ([roadmap](roadmap.md#phase-2-requirements-engineering)).
+- A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): builds (cold dev 58 s, cold release 149 s at `jobs = 4`), binary size (`showcase` 21.0 MB stripped), headless frame cost on llvmpipe, and windowed runs on WSLg with llvmpipe and with the Iris Xe iGPU through `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`. WSLg adds about 24 ms of latency on either GPU. Raw data beside the report.
+- A8 [upstream design documents](research/audit-design-docs.md): 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements; the open items of `07-roadmap.md`. A4b corrected along the way (frames are held back only on Linux dmabuf).
+- A5 [platform matrix](research/audit-platform-matrix.md): Windows and macOS type-check from Linux except `anti-webui-code` and `anti-webui-markdown`; `aarch64-apple-darwin` added to `rust-toolchain.toml`.
+- A7 [baseline quality](research/audit-baseline-quality.md): rustfmt, Clippy (1,109 `float_literal_f32_fallback` warnings from `setter!`, a future hard error), `unsafe`, complexity, duplication.
+- [ADR-0007](decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md): `docs/design` unchanged while soft-forked, taken over at the hard fork; upstream features still adopted after it without duplication.
+- Japanese edition policy in the [documentation policy](documentation-policy.md#japanese-edition).
+- Earlier in Phase 1: A1–A4c and A6 (see the [fork README](README.md)).
+
+## Phase 1 exit criteria
+
+From the [audit plan](research/phase-1-audit-plan.md#exit-criteria):
+
+| Criterion | State |
+|---|---|
+| Every workstream file exists, follows the template, and labels every claim | Done: A1–A8 in `research/`, A9 in `performance/` |
+| Every checklist item has a status and evidence | Done: the checklists in A4a, A4b, and A4c |
+| Baseline violations (A7) and measurements (A9) are recorded with commands | Done |
+| The handoff names the Phase 2 starting point | Done: below |
+| The maintainer approves moving to Phase 2 | Done: Phase 1 closed on 2026-11-27 |
+
+## Phase 2 starting point
+
+Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-engineering)). Start with the design literature review: choose textbook-grade documents and websites on UI framework design, analyse them, and record what applies (features to add, directions, capabilities beyond upstream). Then the [gap analysis](templates/gap-analysis.md), filled from that review and from the "Inputs for gap analysis" section of each audit; the A8 [open items of `07-roadmap.md`](research/audit-design-docs.md#open-items-in-07-roadmapmd) are the first candidates. Then competitor research, grilling sessions, and the project constitution. Carry in:
+
+- The verification steps from Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity; use the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks go to the Phase 4 spikes.
+- "Officially supported platforms" from the [decision log](decisions/README.md#decisions-awaiting-confirmation), due in Phase 2.
+- A true idle measurement needs an example that asks for nothing ([A9](performance/2026-11-26-upstream-baseline.md#windowed-wslg-llvmpipe-and-the-igpu)).
 
 ## Remaining work
 
-1. The maintainer runs `verify-commits accept` for the `mise.toml` commit and `mise install` on the host, then merges the pull request.
-2. The maintainer decides whether A2, A3, A4a–A4c, A6, and A7 run in one agent or in parallel. All of them depend only on A1.
-3. The remaining workstreams in the audit plan order.
-
-## Modified files
-
-- `mise.toml`
-- `docs/fork/quality/tool-adoption-matrix.md`
-- `docs/fork/research/audit-dependencies.md`
-- `docs/fork/research/phase-1-audit-plan.md`
-- `docs/fork/handoff.md`
+1. Review and merge the Phase 1 pull request, [#6](https://github.com/AiraCometes/AntiWebUI/pull/6).
+2. Start Phase 2 as described in [Phase 2 starting point](#phase-2-starting-point).
 
 ## Verification
 
 | Command | Result |
 |---|---|
-| `mise install` (agent sandbox) | cargo-shear 1.14.1 and cargo-gevatter 0.1.5 install |
-| `mise run quality:unused-deps` | 7 findings, exit 0 |
-| `mise run quality:lifetimes` (after the host driver install) | exit 0; findings above |
-| `mise run audit:index` steps | `openlore analyze --no-embed` exit 0 in 31 s |
 | `mise run check` | passes |
+| `benchmarks/phase1/windowed.py --runs 5`, default and `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl` | 15 of 15 runs each, by the maintainer on WSLg |
 
 ## Unresolved issues
 
-- Gevatter and OpenLore are young tools; their output is a pointer, never evidence on its own.
-- `.openlore/` is excluded only in this clone's `.git/info/exclude`; another clone needs the same line, or a fork-owned ignore rule.
-- Real macOS and Windows devices for A5 and A9: availability unknown. Until then, those platforms are compile-checked only.
-- Open questions from Phase 0 still stand: Renovate and the upstream-owned `Cargo.toml` and `Cargo.lock`, the GHCR 5,000-download deletion limit, and CodeRabbit's plan ([plan](quality/ci-and-quality-services.md)); upstream-owned file edits and upstream pull requests settle in Phase 4 ([decision log](decisions/README.md#decisions-awaiting-confirmation)).
+- The A6 handoff recorded `RUSTC_WRAPPER=""` in the agent sandbox; in the A7–A9 session it was `kache`, and cc-rs ran C compiles through it. Check `env | rg RUSTC_WRAPPER` before relying on either. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
+- `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
+- Attachments the maintainer pastes into T3 Code are stored under `~/.t3/userdata/attachments/`, which the safety hook does not let the agent read; ask for the file in the repository instead.
+- Real macOS and Windows devices: no native Linux machine; Windows is this machine's host; a Mac's availability is unknown.
+- Open questions from Phase 0 still stand ([plan](quality/ci-and-quality-services.md), [decision log](decisions/README.md#decisions-awaiting-confirmation)).
 
 ## Relevant documents
 
 - [Roadmap](roadmap.md)
 - [Phase 1 audit plan](research/phase-1-audit-plan.md)
-- [Technical-audit template](templates/technical-audit.md)
-- [Tool adoption matrix](quality/tool-adoption-matrix.md)
+- [Gap-analysis template](templates/gap-analysis.md)
+- [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md)
 
 ## Recommended next action
 
-After the A1 merge and the maintainer's answer on parallel work, run A2 (licence audit) with cargo-deny, from the [technical-audit template](templates/technical-audit.md).
+After the Phase 1 pull request is merged, start the design literature review as described in [Phase 2 starting point](#phase-2-starting-point).
