@@ -3,11 +3,13 @@
 - Updated: 2026-11-26
 - Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
 - Active change: none
-- Branch and commit: `phase-1-audits`, last audit commit `5f6918b` (A5), pushed to `origin`
+- Branch and commit: `phase-1-audits`, last audit commit `633c627` (A8), pushed to `origin`
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
 
+- A8 [upstream design documents](research/audit-design-docs.md) (`633c627`), drafted by Pi in three parts and merged: 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements are tabled, and the open items of `07-roadmap.md` are listed with their status.
+- A4b corrected: frames are held back only on Linux dmabuf, not on macOS or Windows (found during A8).
 - Added `aarch64-apple-darwin` to `rust-toolchain.toml` (maintainer, 2026-11-26), so every session can type-check `anti-webui-macos`.
 - A5 [platform matrix](research/audit-platform-matrix.md) (`5f6918b`), drafted by Pi and completed with cross-checks: Windows and macOS targets type-check except `anti-webui-code` and `anti-webui-markdown` (their `tree-sitter` C build scripts need a target C toolchain); the `svg` example fails with `--no-default-features`.
 - A7 [baseline quality](research/audit-baseline-quality.md) (`5496049`): rustfmt fails on 20 files; Clippy reports 1,159 warnings, 1,109 of them rustc's `float_literal_f32_fallback` from the `setter!` macro's `impl Into<f32>` (a future hard error); `SAFETY:` comments are missing almost only in `anti-webui-macos`; complexity and duplication baselines from lizard and jscpd.
@@ -15,12 +17,12 @@
 
 ## Remaining work
 
-1. A8 upstream documents (`research/audit-design-docs.md`), then A9.
+1. A9 baseline measurements (`performance/<date>-upstream-baseline.md`), the last Phase 1 workstream.
 2. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
 
 ## Modified files
 
-- `docs/fork/research/audit-baseline-quality.md`, `docs/fork/research/audit-platform-matrix.md` (new)
+- `docs/fork/research/audit-baseline-quality.md`, `audit-platform-matrix.md`, `audit-design-docs.md` (new); `audit-capabilities-rendering.md`
 - `docs/fork/README.md`
 - `rust-toolchain.toml`, `docs/fork/quality/tool-adoption-matrix.md`
 - `docs/fork/handoff.md`
@@ -35,7 +37,7 @@
 
 ## Unresolved issues
 
-- The agent sandbox sets `RUSTC_WRAPPER=""` (`~/.config/agent-guard/env`), so agent builds bypass Kache; builds in the maintainer's terminal use it. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
+- The handoff of A6 recorded `RUSTC_WRAPPER=""` in the agent sandbox; in the A7–A8 session it was `kache`, and cc-rs also ran C compiles through it (`kache cc`). Check `env | rg RUSTC_WRAPPER` before relying on either. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
 - `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
 - The `setter!` f32 fix is not proposed upstream (maintainer, 2026-11-26); the fork's style API handles it ([A7](research/audit-baseline-quality.md#the-f32-literal-fallback)).
 - Carry to Phase 2: the verification steps in Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity. Also using the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks (Kani `cover!`, reachability checks for Quint or Stateright, bounded results labelled with their bound) go to the Phase 4 spikes.
@@ -51,4 +53,4 @@
 
 ## Recommended next action
 
-Run A8 (`research/audit-design-docs.md`) from the [technical-audit template](templates/technical-audit.md): an English summary of each `docs/design` file, how far the code matches it (reuse the code-against-docs tables in A4a–A4c and A5), and the open items in `07-roadmap.md`. A8 is reading-heavy, so a Pi draft fits, checked against the code afterwards.
+Run A9 from the [benchmark-report template](templates/benchmark-report.md): `cargo build --timings` cold and warm, example binary sizes with cargo-bloat, and what this machine can run (headless rendering on lavapipe; windows only from the maintainer's terminal, since the sandbox cannot reach the WSLg compositor, see [A5](research/audit-platform-matrix.md#method)). Ask the maintainer to run the windowed measurements outside the sandbox.
