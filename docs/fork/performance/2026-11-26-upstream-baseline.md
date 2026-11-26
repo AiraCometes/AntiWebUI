@@ -116,10 +116,6 @@ Reading the numbers:
 - The iGPU path starts 85–180 ms later and holds 49 MiB more, which is the GL and D3D12 driver stack.
 - The 60 wakeups per second are not an idle app's: `bench_pacing --linger` keeps asking for frame callbacks while nothing changes (`src/anti-webui/examples/bench_pacing.rs:85`–`95`). Nothing is presented, so the renderer is idle, but the UI thread wakes every refresh. A true idle figure needs an example that asks for nothing (Proposed for Phase 2).
 
-### WSLg failure seen during the run
-
-The first attempt failed with `Could not find wayland compositor` after `Connection reset by peer`. `/mnt/wslg/stderr.log` showed Weston dying with signal 11 268 times since WSLg started, every 1 min 43 s, and `weston.log` showed the RDP monitor as `width:0, height:0`: the Windows-side RDP client (`msrdc.exe`) exited at once, so Weston had no screen. `wsl --shutdown` with the Windows session unlocked fixed it; afterwards the monitor was 2400×1600 and Weston no longer crashed (Confirmed by the two logs). Before a windowed measurement on WSLg, check `tail /mnt/wslg/stderr.log` for `terminated with signal 11`.
-
 ## Comparison with baseline
 
 None: this is the first report. Upstream's own measurements in `docs/design` are from other machines (Radeon 880M, RTX 5070 Laptop, M1 Pro) and are not comparable ([A8](../research/audit-design-docs.md)).
@@ -157,7 +153,6 @@ cargo build --locked --release -p anti-webui --example bench_changes --example b
 rm -rf target/a9-cold
 # Windowed, from a desktop terminal (not the agent sandbox)
 cargo build --release --locked -p anti-webui --example bench_pacing --example bench_shaders
-tail -3 /mnt/wslg/stderr.log      # no new "terminated with signal 11"
 python3 benchmarks/phase1/windowed.py --runs 5 > windowed-llvmpipe.json
 GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl python3 benchmarks/phase1/windowed.py --runs 5 > windowed-gl-d3d12.json
 ```

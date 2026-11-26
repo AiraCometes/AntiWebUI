@@ -19,9 +19,7 @@ Measured per run:
 - frame_ms: latency, start -> presented (or end), of each frame under load, as median, p95, p99
 
 On WSL the default GPU is llvmpipe. To reach the Windows GPU, run with
-GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl (OpenGL on Mesa's D3D12 driver, through /dev/dxg). If the
-example cannot find a compositor, check /mnt/wslg/stderr.log for Weston crashes; wsl --shutdown
-with the Windows session unlocked restarts WSLg.
+GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl (OpenGL on Mesa's D3D12 driver, through /dev/dxg).
 """
 
 import argparse

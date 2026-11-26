@@ -1,13 +1,14 @@
 # Handoff
 
 - Updated: 2026-11-27
-- Current phase: Phase 1, every workstream done; waiting for the maintainer's approval to move to Phase 2
+- Current phase: Phase 1 closed by the maintainer on 2026-11-27; its pull request is open. Phase 2 is next
 - Active change: none
 - Branch and commit: `phase-1-audits`, pushed to `origin` (the A9 windowed results are the last commit)
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
 
+- Phase 1 closed (maintainer, 2026-11-27). A design literature phase is planned, its position open ([roadmap](roadmap.md#planned-design-literature-review)).
 - A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): builds (cold dev 58 s, cold release 149 s at `jobs = 4`), binary size (`showcase` 21.0 MB stripped), headless frame cost on llvmpipe, and windowed runs on WSLg with llvmpipe and with the Iris Xe iGPU through `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`. WSLg adds about 24 ms of latency on either GPU. Raw data beside the report.
 - A8 [upstream design documents](research/audit-design-docs.md): 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements; the open items of `07-roadmap.md`. A4b corrected along the way (frames are held back only on Linux dmabuf).
 - A5 [platform matrix](research/audit-platform-matrix.md): Windows and macOS type-check from Linux except `anti-webui-code` and `anti-webui-markdown`; `aarch64-apple-darwin` added to `rust-toolchain.toml`.
@@ -26,7 +27,7 @@ From the [audit plan](research/phase-1-audit-plan.md#exit-criteria):
 | Every checklist item has a status and evidence | Done: the checklists in A4a, A4b, and A4c |
 | Baseline violations (A7) and measurements (A9) are recorded with commands | Done |
 | The handoff names the Phase 2 starting point | Done: below |
-| The maintainer approves moving to Phase 2 | Waiting |
+| The maintainer approves moving to Phase 2 | Done: Phase 1 closed on 2026-11-27 |
 
 ## Phase 2 starting point
 
@@ -38,8 +39,9 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 
 ## Remaining work
 
-1. The maintainer approves Phase 2, or names what Phase 1 still needs.
-2. Open the audit pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants it reviewed.
+1. Review and merge the Phase 1 pull request.
+2. Decide where the design literature phase goes in the [roadmap](roadmap.md#planned-design-literature-review).
+3. Start Phase 2 as described in [Phase 2 starting point](#phase-2-starting-point).
 
 ## Verification
 
@@ -52,7 +54,6 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 
 - The A6 handoff recorded `RUSTC_WRAPPER=""` in the agent sandbox; in the A7–A9 session it was `kache`, and cc-rs ran C compiles through it. Check `env | rg RUSTC_WRAPPER` before relying on either. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
 - `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
-- WSLg can fall into a loop where Weston crashes every 1 min 43 s with a 0×0 RDP monitor; `wsl --shutdown` with the Windows session unlocked fixes it ([A9](performance/2026-11-26-upstream-baseline.md#wslg-failure-seen-during-the-run)).
 - Attachments the maintainer pastes into T3 Code are stored under `~/.t3/userdata/attachments/`, which the safety hook does not let the agent read; ask for the file in the repository instead.
 - Real macOS and Windows devices: no native Linux machine; Windows is this machine's host; a Mac's availability is unknown.
 - Open questions from Phase 0 still stand ([plan](quality/ci-and-quality-services.md), [decision log](decisions/README.md#decisions-awaiting-confirmation)).
@@ -66,4 +67,4 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 
 ## Recommended next action
 
-Ask the maintainer to approve Phase 2. Once approved, start the gap analysis as described in [Phase 2 starting point](#phase-2-starting-point).
+After the Phase 1 pull request is merged, start the gap analysis as described in [Phase 2 starting point](#phase-2-starting-point).

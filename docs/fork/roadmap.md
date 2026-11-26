@@ -5,7 +5,7 @@ Phase order and status. Moving to the next phase needs the maintainer's approval
 | Phase | Name | Status | Exit condition |
 |---|---|---|---|
 | 0 | Project bootstrap | done (2026-11-25, [#2](https://github.com/AiraCometes/AntiWebUI/pull/2)) | Phase 0 pull request merged |
-| 1 | Upstream audit | in progress (approved 2026-11-25) | [Audit plan](research/phase-1-audit-plan.md) exit criteria met |
+| 1 | Upstream audit | done (2026-11-27) | [Audit plan](research/phase-1-audit-plan.md) exit criteria met |
 | 2 | Requirements engineering | not started | Constitution and master requirements accepted |
 | 3 | Master architecture | not started | arc42 architecture and core ADRs accepted |
 | 4 | Technical validation | not started | Spikes answered; ADRs final |
@@ -21,6 +21,10 @@ Upstream commit pinning, repository and environment inspection, documentation co
 ## Phase 1: upstream audit
 
 A complete codebase and documentation audit, capability inventory, dependency analysis, platform matrix, licence audit, technical debt, existing tests and benchmarks, and baseline measurements. See the [plan](research/phase-1-audit-plan.md).
+
+## Planned: design literature review
+
+A phase to be added, at a position not decided yet (maintainer, 2026-11-27): read textbook-grade documents and websites on UI framework design, analyse them, and take what applies into the fork's requirements and architecture. Its scope, sources, outputs, and place in the order are open ([decision log](decisions/README.md#decisions-awaiting-confirmation)). When the position is set, it gets a number and a row in the table above.
 
 ## Phase 2: requirements engineering
 
