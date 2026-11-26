@@ -8,6 +8,7 @@
 
 ## Completed in this session
 
+- [ADR-0007](decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md): `docs/design` stays unchanged while soft-forked; the fork takes it over at the hard fork, and keeps adopting upstream features after it without duplication (maintainer, 2026-11-26).
 - A8 [upstream design documents](research/audit-design-docs.md) (`633c627`), drafted by Pi in three parts and merged: 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements are tabled, and the open items of `07-roadmap.md` are listed with their status.
 - A4b corrected: frames are held back only on Linux dmabuf, not on macOS or Windows (found during A8).
 - Added `aarch64-apple-darwin` to `rust-toolchain.toml` (maintainer, 2026-11-26), so every session can type-check `anti-webui-macos`.

@@ -773,6 +773,8 @@ Every M1 box is `[x]`, so the open items are the four M1 known limits, the M2–
 
 ## Baseline violations
 
+[ADR-0007](../decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md) settles what happens to these: `docs/design` stays unchanged while the fork tracks upstream, and the fork takes it over at the hard fork.
+
 Not rules but facts a reader of `docs/design` must allow for, kept as the baseline so the fork's own documents do not repeat them:
 
 - 23 statements in this audit, and 13 more in A4b (4), A4c (5), and A5 (4), are stale: the documents are not updated when later work changes what they describe. The most misleading are "not done" lines that are done (`06`, `09`, `17`, `18`, `20`, `30`, `35`) and API sketches with old names (`04`'s `ImeRequest`, `31`'s `gutter(Style)`).
@@ -790,7 +792,6 @@ Not rules but facts a reader of `docs/design` must allow for, kept as the baseli
 
 ## Open questions
 
-- Should the fork keep `docs/design` as upstream's record and write its own requirements in OpenSpec, or correct the stale statements in place? Answered by the maintainer under [ADR-0002](../decisions/0002-track-upstream-as-a-soft-fork.md) (upstream-owned files take small edits only) and [ADR-0003](../decisions/0003-openspec-as-the-single-specification-system.md).
 - Which upstream measurements does the fork rely on? Answered by A9 re-measuring the ones it names, on this machine.
 - The claims left Unverified in each entry (Compose comparisons in `19` and `20`, `hayro` blend modes and AES in `26`, real video and HDR in `24`, `merman` fidelity in `28`, KaTeX parity in `40`): each entry names what would settle it.
 

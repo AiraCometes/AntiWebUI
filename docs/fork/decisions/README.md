@@ -10,6 +10,7 @@ Each row is one MADR file in this folder ([ADR-0001](0001-record-decisions-as-ma
 | [0004](0004-english-fork-documentation.md) | Write fork documents in English under docs/fork, and keep upstream documents unchanged | accepted | 2026-11-24 |
 | [0005](0005-minimal-phase-0-toolchain.md) | Start with a documentation-only toolchain in Phase 0 | accepted | 2026-11-24 |
 | [0006](0006-repository-as-the-source-of-truth-for-sessions.md) | Keep agent instructions and session state in the repository | accepted | 2026-11-24 |
+| [0007](0007-upstream-design-documents-across-the-fork-lifecycle.md) | Leave upstream design documents unchanged while soft-forked, take them over at the hard fork, and keep adopting upstream features after it | accepted | 2026-11-26 |
 
 ## Decisions awaiting confirmation
 

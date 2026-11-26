@@ -34,6 +34,8 @@ Chosen option: English fork documents under `docs/fork/`. The rules are in the [
 - Good, because merges from upstream never touch fork documents.
 - Bad, because readers who want upstream detail must read Japanese. Audits summarise the parts they rely on in English, with section references.
 
+For `docs/design/` at the hard fork, see [ADR-0007](0007-upstream-design-documents-across-the-fork-lifecycle.md).
+
 ### Confirmation
 
 `rumdl` and `lychee` in the pre-commit hook check only fork-owned Markdown. Review rejects edits to `docs/design/` that do not come from upstream.
