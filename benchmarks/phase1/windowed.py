@@ -5,7 +5,7 @@ Run from the repository root, in a desktop session (not the agent sandbox, which
 compositor):
 
     cargo build --release --locked -p anti-webui --example bench_pacing --example bench_shaders
-    python3 benchmarks/phase1/windowed.py --runs 5 > a9-windowed.json
+    python3 benchmarks/phase1/windowed.py --runs 5 > windowed.json
 
 Each run starts an example with ANTIWEBUI_FRAME_STATS, records the launch time on the same clock
 the CSV uses (CLOCK_MONOTONIC), samples /proc while the window is idle, and reads the CSV when the
@@ -16,7 +16,12 @@ Measured per run:
 - idle_wakeups_per_s: context switches of all threads per second while nothing changes
 - idle_presents: frames presented while nothing changes
 - rss_idle_kib, rss_peak_kib: VmRSS during the idle window, VmHWM at its end
-- frame_ms: start -> presented (or end) for each frame under load, as median, p95, p99
+- frame_ms: latency, start -> presented (or end), of each frame under load, as median, p95, p99
+
+On WSL the default GPU is llvmpipe. To reach the Windows GPU, run with
+GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl (OpenGL on Mesa's D3D12 driver, through /dev/dxg). If the
+example cannot find a compositor, check /mnt/wslg/stderr.log for Weston crashes; wsl --shutdown
+with the Windows session unlocked restarts WSLg.
 """
 
 import argparse
@@ -77,9 +82,17 @@ def run(example, args, load_s, idle_s, csv_path):
         idle["idle_wakeups_per_s"] = (c1 - c0) / ((t1 - t0) / 1e9)
         idle["window_ns"] = (t0, t1)
     _, stderr = proc.communicate(timeout=120)
+    out = {"example": example, "args": args, "returncode": proc.returncode,
+           "summary": stderr.strip()}
+    if not csv_path.exists():
+        # The example failed before it could close its window; keep what it said and go on.
+        out["error"] = "no frame-stats CSV was written"
+        print(f"{example} failed (exit {proc.returncode}):\n{stderr.strip()[-2000:]}",
+              file=sys.stderr)
+        return out
     rows = list(csv.DictReader(open(csv_path)))
     shown = lambda r: int(r["presented"] or r["end"])
-    out = {"example": example, "args": args, "frames": len(rows), "summary": stderr.strip()}
+    out["frames"] = len(rows)
     if rows:
         out["startup_ms"] = (shown(rows[0]) - launch) / 1e6
         loaded = [r for r in rows if shown(r) - launch < load_s * 1e9]

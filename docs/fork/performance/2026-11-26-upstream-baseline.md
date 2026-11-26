@@ -14,9 +14,9 @@ What upstream costs today on this machine, so that fork changes can be compared 
 | Item | Value |
 |---|---|
 | OS and version | Ubuntu 26.04.1 LTS on WSL2, Linux 6.18.58.1-microsoft-standard-WSL2 |
-| Display server / compositor | None for the measurements in this report: they ran in the agent sandbox, which cannot reach WSLg ([A5](../research/audit-platform-matrix.md#method)) |
-| CPU, GPU, driver | Intel Core i5-11300H, 4 cores and 8 threads, 7 GB of memory visible to WSL2; no `/dev/dri`, so the GPU is llvmpipe through Mesa 26.0.8 (`llvmpipe (LLVM 21.1.8, 256 bits)`, printed by the benches) |
-| Display resolution, refresh rate, scale factor | Not applicable (headless; `bench_drag` renders at 2340×1616) |
+| Display server / compositor | Builds and headless runs: none (the agent sandbox cannot reach WSLg, [A5](../research/audit-platform-matrix.md#method)). Windowed runs: WSLg 1.0.79 (Weston, RDP backend, WSL 3.0.5.0) on Windows 10.0.26300 |
+| CPU, GPU, driver | Intel Core i5-11300H, 4 cores and 8 threads, 7 GB of memory visible to WSL2. No `/dev/dri`: the default GPU is llvmpipe through Mesa 26.0.8 (`llvmpipe (LLVM 21.1.8, 256 bits)`). With `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`, Intel Iris Xe through Mesa's D3D12 driver and `/dev/dxg` (`D3D12 (Intel(R) Iris(R) Xe Graphics)`, OpenGL 4.1). No native Linux machine is available |
+| Display resolution, refresh rate, scale factor | Headless: `bench_drag` renders at 2340×1616. Windowed: 2400×1600 screen, 60 Hz (16.667 ms refresh); the Windows scale factor was not recorded |
 | Power settings | Unrecorded (laptop, WSL2 host power plan) |
 | Rust toolchain, profile, flags, features | 1.99.0 (`rust-toolchain.toml`). Workspace has no `[profile]`; the maintainer's `~/.cargo/config.toml` sets `[build] jobs = 4` and `[profile.dev] debug = "line-tables-only"`, which every number here includes. Release is Cargo's default (opt-level 3, no LTO, 16 codegen units). Default features. |
 
@@ -28,7 +28,7 @@ What upstream costs today on this machine, so that fork changes can be compared 
 
 **Headless frame cost.** `bench_changes` (hover, caret blink, text change, scroll, and inertia in documents of 2,000 and 20,000 rows) and `bench_drag` (drag sessions), release build, three runs each in a row. Both print their own per-phase averages or p50/p99 over many iterations; this report gives the median of the three runs. Peak RSS and wall time from `/usr/bin/time`.
 
-**Windowed metrics.** Not measured here; see [Pending: windowed measurements](#pending-windowed-measurements).
+**Windowed metrics.** [`benchmarks/phase1/windowed.py`](../../../benchmarks/phase1/windowed.py), run by the maintainer in a desktop session, five runs per case; see [Windowed](#windowed-wslg-llvmpipe-and-the-igpu).
 
 ## Results
 
@@ -89,16 +89,36 @@ Starting a drag of 6.6 MB of selected text took 11.5 ms; of 131 KB, 1.6 ms (firs
 
 These RSS figures include llvmpipe's own memory and the benches' large documents; they are not an app's idle memory.
 
-### Pending: windowed measurements
+### Windowed: WSLg, llvmpipe and the iGPU
 
-Startup time, idle wakeups, idle presents, idle RSS, and frame time on a compositor need a desktop session, which the agent sandbox does not have ([A5](../research/audit-platform-matrix.md#linux-wayland)). [`benchmarks/phase1/windowed.py`](../../../benchmarks/phase1/windowed.py) measures them; the maintainer runs it from a terminal on this machine (WSLg) and, where available, on a native Linux session:
+Run by the maintainer on 2026-11-27 from a WSL terminal on this machine, through WSLg (Weston with the RDP backend, a 2400×1600 screen, 60 Hz). Two GPU paths: the default, which is llvmpipe, and OpenGL 4.1 on Mesa's D3D12 Gallium driver, which reaches the Intel Iris Xe iGPU through `/dev/dxg` (`GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`). Both used the wgpu surface, not dmabufs: WSL has no `/dev/dri`. Median of 5 runs per case; latency is from a frame's start to its `presented` time, and each run's p50, p95, and p99 are over all its frames under load. Raw data: [`windowed-llvmpipe.json`](2026-11-26-upstream-baseline/windowed-llvmpipe.json), [`windowed-gl-d3d12.json`](2026-11-26-upstream-baseline/windowed-gl-d3d12.json). All Confirmed by those files.
 
-```sh
-cargo build --release --locked -p anti-webui --example bench_pacing --example bench_shaders
-python3 benchmarks/phase1/windowed.py --runs 5 > a9-windowed.json
-```
+| Case | Metric | Unit | llvmpipe | iGPU (GL on D3D12) |
+|---|---|---|---:|---:|
+| `bench_pacing` (light load) | Startup, launch to first presented frame | ms | 152 | 238 |
+| | Latency p50 / p95 / p99 | ms | 24.0 / 24.4 / 24.6 | 23.9 / 24.3 / 24.5 |
+| | CPU per frame, p50 (first run's summary) | ms | 2.7 | 5.4 |
+| | Wakeups per second while nothing changes (8 s) | 1/s | 60.0 | 60.0 |
+| | Frames presented while nothing changes | frames | 0 | 0 |
+| | VmRSS while nothing changes | MiB | 115 | 164 |
+| `bench_pacing --rows 2000 --layers 40` | Startup | ms | 221 | 398 |
+| | Latency p50 / p95 / p99 | ms | 50.5 / 54.9 / 64.2 | 23.8 / 24.2 / 34.8 |
+| | Frames in 6 s | frames | 136 | 335 |
+| | CPU per frame, p50 (first run's summary) | ms | 33.3 | 14.4 |
+| `bench_shaders --kind same --count 1000` | Startup | ms | 124 | 276 |
+| | Latency p50 / p95 / p99 | ms | 26.5 / 30.3 / 30.7 | 23.8 / 24.2 / 24.4 |
+| | Frames in 6 s | frames | 324 | 346 |
 
-It records, per run: launch to first presented frame (on `CLOCK_MONOTONIC`, the clock `ANTIWEBUI_FRAME_STATS` uses); context switches per second of all threads and frames presented during 8 s with nothing changing (`bench_pacing --linger`); VmRSS then and VmHWM at its end; and start-to-presented frame time under `bench_pacing --rows 2000 --layers 40` and `bench_shaders --kind same --count 1000`. Until those results are added here, these metrics are Unverified.
+Reading the numbers:
+
+- About 24 ms of latency, 1.4 refreshes, is the floor on WSLg with either GPU: a frame goes through the wgpu surface, Weston, and the RDP client before it is shown. It is a property of WSLg, not of the framework (Inferred from both GPUs having the same floor).
+- On llvmpipe the heavy case runs at about 22 fps (136 frames in 6 s, 236 refreshes skipped, all blamed on the CPU in the first run's summary). On the iGPU it keeps 60 Hz with 14 skipped refreshes.
+- The iGPU path starts 85–180 ms later and holds 49 MiB more, which is the GL and D3D12 driver stack.
+- The 60 wakeups per second are not an idle app's: `bench_pacing --linger` keeps asking for frame callbacks while nothing changes (`src/anti-webui/examples/bench_pacing.rs:85`–`95`). Nothing is presented, so the renderer is idle, but the UI thread wakes every refresh. A true idle figure needs an example that asks for nothing (Proposed for Phase 2).
+
+### WSLg failure seen during the run
+
+The first attempt failed with `Could not find wayland compositor` after `Connection reset by peer`. `/mnt/wslg/stderr.log` showed Weston dying with signal 11 268 times since WSLg started, every 1 min 43 s, and `weston.log` showed the RDP monitor as `width:0, height:0`: the Windows-side RDP client (`msrdc.exe`) exited at once, so Weston had no screen. `wsl --shutdown` with the Windows session unlocked fixed it; afterwards the monitor was 2400×1600 and Weston no longer crashed (Confirmed by the two logs). Before a windowed measurement on WSLg, check `tail /mnt/wslg/stderr.log` for `terminated with signal 11`.
 
 ## Comparison with baseline
 
@@ -108,10 +128,12 @@ None: this is the first report. Upstream's own measurements in `docs/design` are
 
 - One run per build measurement; build times on WSL2 vary with the host's load and file cache. The no-op and touch rebuilds depend on what was just built.
 - `jobs = 4` on 8 hardware threads, from the maintainer's user config, halves the parallelism CI would use.
-- Every GPU number is llvmpipe on the CPU, so GPU time competes with the UI thread for cores. It says nothing about a real GPU.
+- The headless GPU numbers are llvmpipe on the CPU, so GPU time competes with the UI thread for cores. The only real GPU measured is the iGPU through OpenGL on D3D12, a WSL-only path; neither the Linux Vulkan and dmabuf path nor the Windows DX12 backend was measured.
+- Linux was measured in one environment only, WSLg, whose compositor adds about 24 ms of latency; there is no native Linux machine.
+- `bench_pacing --linger` is not a true idle state (see [Windowed](#windowed-wslg-llvmpipe-and-the-igpu)).
 - The benches report averages or p50/p99 computed inside the program; this report takes the median of three such summaries, not percentiles over raw samples.
 - Release binaries carry the default profile; a fork profile with LTO, `codegen-units = 1`, or `panic = "abort"` would change size and speed.
-- Nothing here was measured on macOS or Windows.
+- Nothing here was measured on macOS or on the Windows backend.
 
 ## Reproduce
 
@@ -133,4 +155,9 @@ cargo build --locked --release -p anti-webui --example bench_changes --example b
 /usr/bin/time -f '%e s %M KiB' $CARGO_TARGET_DIR/release/examples/bench_changes
 /usr/bin/time -f '%e s %M KiB' $CARGO_TARGET_DIR/release/examples/bench_drag
 rm -rf target/a9-cold
+# Windowed, from a desktop terminal (not the agent sandbox)
+cargo build --release --locked -p anti-webui --example bench_pacing --example bench_shaders
+tail -3 /mnt/wslg/stderr.log      # no new "terminated with signal 11"
+python3 benchmarks/phase1/windowed.py --runs 5 > windowed-llvmpipe.json
+GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl python3 benchmarks/phase1/windowed.py --runs 5 > windowed-gl-d3d12.json
 ```

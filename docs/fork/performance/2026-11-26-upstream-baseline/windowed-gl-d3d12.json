@@ -1,0 +1,349 @@
+{
+ "environment": {
+  "XDG_SESSION_TYPE": null,
+  "WAYLAND_DISPLAY": "wayland-0",
+  "DISPLAY": ":0"
+ },
+ "results": [
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n335 frames: 335 shown, 0 discarded; 335 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.64    33.74\nui              0.07     0.10     0.12     0.14\ndiff            0.01     0.01     0.02     0.07\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.30     6.23     7.16    41.68\ncpu total       5.39     6.32     7.29    41.77\nheld            0.00     0.00     0.00     0.00\nlatency        23.93    24.33    24.54   123.58\ninterval       16.99    17.36    50.74    51.28\nshown-cb       -6.96    -6.81    -6.71    -6.69\nstep error      0.22     0.67     3.44    89.02\ncontinuous frames 328: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 335,
+   "startup_ms": 242.566986,
+   "frame_ms": {
+    "median": 23.929062,
+    "p95": 24.3315247,
+    "p99": 24.5425832,
+    "n": 327
+   },
+   "rss_idle_kib": 167512,
+   "rss_peak_kib": 167512,
+   "idle_wakeups_per_s": 59.99204037606699,
+   "idle_presents": 0,
+   "idle_window_s": 8.001061424
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n338 frames: 338 shown, 0 discarded; 338 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    17.11    33.75\nui              0.07     0.10     0.13     0.20\ndiff            0.01     0.01     0.02     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.17     6.12     6.51    40.44\ncpu total       5.26     6.24     6.60    40.54\nheld            0.00     0.00     0.00     0.00\nlatency        23.89    24.31    24.54   117.61\ninterval       17.01    17.46    33.56    49.93\nshown-cb       -6.91    -6.76    -6.65    -6.58\nstep error      0.26     0.82     2.76    82.91\ncontinuous frames 330: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 338,
+   "startup_ms": 240.862844,
+   "frame_ms": {
+    "median": 23.892263,
+    "p95": 24.324208300000002,
+    "p99": 24.51641592,
+    "n": 330
+   },
+   "rss_idle_kib": 167412,
+   "rss_peak_kib": 167412,
+   "idle_wakeups_per_s": 60.115098066478104,
+   "idle_presents": 0,
+   "idle_window_s": 8.00131773
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n340 frames: 340 shown, 0 discarded; 340 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.45    33.73\nui              0.07     0.11     0.15     0.22\ndiff            0.01     0.01     0.02     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.07     7.55     9.04    41.87\ncpu total       5.18     7.67     9.17    41.96\nheld            0.00     0.00     0.00     0.00\nlatency        23.81    24.25    24.43   115.32\ninterval       16.91    17.41    47.94    48.96\nshown-cb       -6.89    -6.72    -6.61    -2.80\nstep error      0.22     0.91     2.76    91.75\ncontinuous frames 333: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 340,
+   "startup_ms": 237.542152,
+   "frame_ms": {
+    "median": 23.808979,
+    "p95": 24.2471075,
+    "p99": 24.4196175,
+    "n": 331
+   },
+   "rss_idle_kib": 168068,
+   "rss_peak_kib": 168068,
+   "idle_wakeups_per_s": 59.983896902989116,
+   "idle_presents": 0,
+   "idle_window_s": 8.002147656
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n337 frames: 337 shown, 0 discarded; 337 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.57    33.77\nui              0.07     0.11     0.15     0.18\ndiff            0.01     0.01     0.02     0.03\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.31     6.28     8.87    41.20\ncpu total       5.39     6.37     9.00    41.35\nheld            0.00     0.00     0.00     0.00\nlatency        23.91    24.41    24.81   105.76\ninterval       16.99    17.53    49.97    53.60\nshown-cb       -6.92    -6.75    -6.69    -6.55\nstep error      0.25     1.08     3.10    82.18\ncontinuous frames 329: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 337,
+   "startup_ms": 235.766038,
+   "frame_ms": {
+    "median": 23.904612,
+    "p95": 24.40521445,
+    "p99": 24.80684725,
+    "n": 328
+   },
+   "rss_idle_kib": 167984,
+   "rss_peak_kib": 167984,
+   "idle_wakeups_per_s": 59.98745183982101,
+   "idle_presents": 0,
+   "idle_window_s": 8.001673438
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--linger",
+    "10.0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n336 frames: 336 shown, 0 discarded; 336 without a GPU time; refresh 16.667 ms; damage 0.4%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02    33.61    33.73\nui              0.07     0.12     0.16     0.20\ndiff            0.01     0.01     0.02     0.02\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.53     6.70     7.69    38.21\ncpu total       5.61     6.82     7.83    38.31\nheld            0.00     0.00     0.00     0.00\nlatency        23.96    24.34    24.60   110.45\ninterval       17.07    17.46    50.71    53.85\nshown-cb       -6.91    -6.71    -6.65    -6.63\nstep error      0.26     0.80     2.78    86.78\ncontinuous frames 329: 0 refresh(es) skipped; late by CPU 0, CPU+GPU 0, elsewhere 0",
+   "frames": 336,
+   "startup_ms": 233.882239,
+   "frame_ms": {
+    "median": 23.95824,
+    "p95": 24.3414471,
+    "p99": 24.57388856,
+    "n": 327
+   },
+   "rss_idle_kib": 168144,
+   "rss_peak_kib": 168144,
+   "idle_wakeups_per_s": 59.9905020187655,
+   "idle_presents": 0,
+   "idle_window_s": 8.001266598
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n331 frames: 330 shown, 0 discarded; 331 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.03     0.06\nui              0.38     0.65     0.84    36.16\ndiff            0.02     0.03     0.03     0.04\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         14.02    15.31    16.81   195.76\ncpu total      14.40    15.81    17.24   231.93\nheld            0.00     0.00     0.00     0.00\nlatency        23.81    24.24    34.46   296.97\ninterval       16.89    17.28    27.52    32.24\nshown-cb       -6.92    -6.79    -6.73    -6.71\nstep error      0.17     2.99     9.79   257.85\ncontinuous frames 329: 14 refresh(es) skipped; late by CPU 8, CPU+GPU 0, elsewhere 6",
+   "frames": 331,
+   "startup_ms": 429.262518,
+   "frame_ms": {
+    "median": 23.8100415,
+    "p95": 24.2420388,
+    "p99": 34.422897580000004,
+    "n": 322
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n332 frames: 331 shown, 0 discarded; 332 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.03     0.05\nui              0.38     0.62     0.76    32.76\ndiff            0.02     0.03     0.04     0.06\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         13.49    15.07    16.82   162.63\ncpu total      13.89    15.59    17.51   195.40\nheld            0.00     0.00     0.00     0.00\nlatency        23.80    24.31    34.45   269.39\ninterval       16.89    17.35    27.54    33.34\nshown-cb       -6.91    -6.78    -6.69    -5.89\nstep error      0.15     0.89     9.23   229.23\ncontinuous frames 330: 14 refresh(es) skipped; late by CPU 8, CPU+GPU 0, elsewhere 6",
+   "frames": 332,
+   "startup_ms": 395.633839,
+   "frame_ms": {
+    "median": 23.805449000000003,
+    "p95": 24.301259499999997,
+    "p99": 34.40986677,
+    "n": 324
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n336 frames: 335 shown, 0 discarded; 336 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.05     0.10\nui              0.37     0.53     0.77    32.36\ndiff            0.02     0.02     0.04     0.05\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         11.27    13.50    17.88   163.49\ncpu total      11.68    13.87    18.27   195.86\nheld            0.00     0.00     0.00     0.00\nlatency        23.80    24.11    35.30   271.60\ninterval       16.89    17.19    28.04    33.20\nshown-cb       -6.92    -6.76    -6.71    -6.67\nstep error      0.14     0.50     3.78   231.54\ncontinuous frames 334: 7 refresh(es) skipped; late by CPU 7, CPU+GPU 0, elsewhere 0",
+   "frames": 336,
+   "startup_ms": 397.802562,
+   "frame_ms": {
+    "median": 23.802769,
+    "p95": 24.1164454,
+    "p99": 35.18095,
+    "n": 327
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n335 frames: 334 shown, 0 discarded; 335 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.02     0.06\nui              0.39     0.54     0.78    32.51\ndiff            0.02     0.02     0.03     0.04\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         10.20    12.88    18.68   170.42\ncpu total      10.64    13.25    19.32   202.94\nheld            0.00     0.00     0.00     0.00\nlatency        23.83    24.14    36.46   276.60\ninterval       16.92    17.20    28.31    30.77\nshown-cb       -6.90    -6.78    -6.71    -6.71\nstep error      0.15     0.55     2.61   238.95\ncontinuous frames 333: 7 refresh(es) skipped; late by CPU 7, CPU+GPU 0, elsewhere 0",
+   "frames": 335,
+   "startup_ms": 405.46345,
+   "frame_ms": {
+    "median": 23.828873,
+    "p95": 24.16383975,
+    "p99": 36.1434255,
+    "n": 326
+   }
+  },
+  {
+   "example": "bench_pacing",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--rows",
+    "2000",
+    "--layers",
+    "40",
+    "--linger",
+    "0"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n336 frames: 335 shown, 0 discarded; 336 without a GPU time; refresh 16.667 ms; damage 100.0%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.03     0.08\nui              0.38     0.54     0.78    32.43\ndiff            0.02     0.02     0.03     0.08\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit         13.31    14.92    17.39   164.10\ncpu total      13.76    15.35    17.77   196.55\nheld            0.00     0.00     0.00     0.00\nlatency        23.83    24.14    34.87   273.36\ninterval       16.92    17.19    27.64    32.05\nshown-cb       -6.92    -6.80    -6.74    -6.72\nstep error      0.16     0.60     4.10   234.45\ncontinuous frames 334: 7 refresh(es) skipped; late by CPU 6, CPU+GPU 0, elsewhere 1",
+   "frames": 336,
+   "startup_ms": 395.298988,
+   "frame_ms": {
+    "median": 23.824107,
+    "p95": 24.1398769,
+    "p99": 34.78411732000001,
+    "n": 327
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n345 frames: 344 shown, 0 discarded; 345 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait           -0.01     0.00     0.02     0.05\nui              0.87     1.30     1.73     2.60\ndiff            0.19     0.30     0.37     0.43\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          4.98     5.72     6.21    98.90\ncpu total       6.20     7.14     7.66   101.56\nheld            0.00     0.00     0.00     0.00\nlatency        23.87    24.24    24.40   170.82\ninterval       16.97    17.24    17.47    26.48\nshown-cb       -6.89    -6.71    -6.67    -6.62\nstep error      0.19     0.60     1.59   137.43\ncontinuous frames 343: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 345,
+   "startup_ms": 306.30308,
+   "frame_ms": {
+    "median": 23.872217,
+    "p95": 24.239144800000002,
+    "p99": 24.39648466,
+    "n": 335
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n346 frames: 345 shown, 0 discarded; 346 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.08     0.13\nui              0.96     1.45     1.92     1.99\ndiff            0.23     0.37     0.46     0.53\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          4.92     5.82     6.76    78.83\ncpu total       6.27     7.33     7.81    80.32\nheld            0.00     0.00     0.00     0.00\nlatency        23.88    24.27    24.58   141.10\ninterval       17.01    17.36    17.64    26.83\nshown-cb       -6.90    -6.71    -6.65    -6.60\nstep error      0.21     0.63     1.76   107.35\ncontinuous frames 344: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 346,
+   "startup_ms": 256.618367,
+   "frame_ms": {
+    "median": 23.885586,
+    "p95": 24.2743582,
+    "p99": 24.57536128,
+    "n": 337
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n347 frames: 346 shown, 0 discarded; 347 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.03     0.07\nui              0.91     1.28     1.66     1.95\ndiff            0.20     0.33     0.42     0.49\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.22     5.93     6.27    80.52\ncpu total       6.44     7.50     7.81    82.10\nheld            0.00     0.00     0.00     0.00\nlatency        23.83    24.23    24.46   136.71\ninterval       16.97    17.30    17.49    27.54\nshown-cb       -6.87    -6.70    -6.64    -6.62\nstep error      0.22     0.71     1.09   102.25\ncontinuous frames 345: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 347,
+   "startup_ms": 254.025427,
+   "frame_ms": {
+    "median": 23.829238,
+    "p95": 24.212244650000002,
+    "p99": 24.44287218,
+    "n": 338
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n346 frames: 345 shown, 0 discarded; 346 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.03     0.19\nui              0.87     1.24     1.61     2.12\ndiff            0.18     0.29     0.36     0.42\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.00     5.71     6.26    81.75\ncpu total       6.18     7.06     7.46    83.32\nheld            0.00     0.00     0.00     0.00\nlatency        23.84    24.24    24.45   158.59\ninterval       16.96    17.30    17.51    27.26\nshown-cb       -6.90    -6.72    -6.66    -6.64\nstep error      0.21     0.71     1.22   124.74\ncontinuous frames 344: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 346,
+   "startup_ms": 276.49355,
+   "frame_ms": {
+    "median": 23.839699,
+    "p95": 24.228594400000002,
+    "p99": 24.4345882,
+    "n": 337
+   }
+  },
+  {
+   "example": "bench_shaders",
+   "args": [
+    "--seconds",
+    "6.0",
+    "--kind",
+    "same",
+    "--count",
+    "1000"
+   ],
+   "returncode": 0,
+   "summary": "libEGL warning: failed to get driver name for fd -1\n\nlibEGL warning: MESA-LOADER: failed to retrieve device information\n\nlibEGL warning: failed to get driver name for fd -1\n\n[anti-webui] frame stats\nGPU: D3D12 (Intel(R) Iris(R) Xe Graphics) (IntegratedGpu, , 4.1 (Core Profile) Mesa 26.0.8-1ubuntu0.3), wgpu surface\n345 frames: 344 shown, 0 discarded; 345 without a GPU time; refresh 16.667 ms; damage 55.8%, repainted 100.0%; 0 buffer(s)\nms               p50      p95      p99      max\nwait            0.01     0.02     0.05     0.07\nui              0.90     1.32     1.63     2.05\ndiff            0.20     0.31     0.37     0.40\nbuffer          0.00     0.00     0.00     0.00\nrecord          0.00     0.00     0.00     0.00\nsubmit          5.05     5.69     6.35    89.02\ncpu total       6.24     7.14     8.27    90.54\nheld            0.00     0.00     0.00     0.00\nlatency        23.82    24.19    24.52   170.06\ninterval       16.94    17.25    17.46    26.92\nshown-cb       -6.91    -6.72    -6.66    -6.62\nstep error      0.20     0.63     0.96   136.35\ncontinuous frames 343: 1 refresh(es) skipped; late by CPU 1, CPU+GPU 0, elsewhere 0",
+   "frames": 345,
+   "startup_ms": 289.418987,
+   "frame_ms": {
+    "median": 23.825927,
+    "p95": 24.1929004,
+    "p99": 24.49226204,
+    "n": 337
+   }
+  }
+ ]
+}

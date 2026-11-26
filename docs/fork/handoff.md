@@ -1,60 +1,69 @@
 # Handoff
 
-- Updated: 2026-11-26
-- Current phase: Phase 1 (in progress, approved by the maintainer on 2026-11-25)
+- Updated: 2026-11-27
+- Current phase: Phase 1, every workstream done; waiting for the maintainer's approval to move to Phase 2
 - Active change: none
-- Branch and commit: `phase-1-audits`, A9 committed on top of A8, pushed to `origin`
+- Branch and commit: `phase-1-audits`, pushed to `origin` (the A9 windowed results are the last commit)
 - Agent: Claude Code, Claude Opus 5.5
 
 ## Completed in this session
 
-- A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): cold dev build 58 s and cold release 149 s at `jobs = 4`; `showcase` 21.0 MB stripped; headless frame costs on llvmpipe (a text change at 20,000 rows is 18.5 ms, mostly layout). Windowed metrics are pending a run of `benchmarks/phase1/windowed.py` in a desktop session.
-- Japanese edition policy added to the [documentation policy](documentation-policy.md#japanese-edition): English is the master, the Japanese edition matches it in content and structure, checked by a machine; timing and location are open (maintainer, 2026-11-26).
-- [ADR-0007](decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md): `docs/design` stays unchanged while soft-forked; the fork takes it over at the hard fork, and keeps adopting upstream features after it without duplication (maintainer, 2026-11-26).
-- A8 [upstream design documents](research/audit-design-docs.md) (`633c627`), drafted by Pi in three parts and merged: 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements are tabled, and the open items of `07-roadmap.md` are listed with their status.
-- A4b corrected: frames are held back only on Linux dmabuf, not on macOS or Windows (found during A8).
-- Added `aarch64-apple-darwin` to `rust-toolchain.toml` (maintainer, 2026-11-26), so every session can type-check `anti-webui-macos`.
-- A5 [platform matrix](research/audit-platform-matrix.md) (`5f6918b`), drafted by Pi and completed with cross-checks: Windows and macOS targets type-check except `anti-webui-code` and `anti-webui-markdown` (their `tree-sitter` C build scripts need a target C toolchain); the `svg` example fails with `--no-default-features`.
-- A7 [baseline quality](research/audit-baseline-quality.md) (`5496049`): rustfmt fails on 20 files; Clippy reports 1,159 warnings, 1,109 of them rustc's `float_literal_f32_fallback` from the `setter!` macro's `impl Into<f32>` (a future hard error); `SAFETY:` comments are missing almost only in `anti-webui-macos`; complexity and duplication baselines from lizard and jscpd.
-- Earlier in Phase 1: A2 [licences](research/audit-licenses.md), A3 [wgpu fork](research/audit-wgpu-fork.md), A4a [core](research/audit-capabilities-core.md), A4b [rendering](research/audit-capabilities-rendering.md), A4c [platform](research/audit-capabilities-platform.md), A6 [tests](research/audit-tests.md); toolchain pinned to 1.99.0 (`89c8afc`); Kache used locally (`4bcbd84`).
+- A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): builds (cold dev 58 s, cold release 149 s at `jobs = 4`), binary size (`showcase` 21.0 MB stripped), headless frame cost on llvmpipe, and windowed runs on WSLg with llvmpipe and with the Iris Xe iGPU through `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`. WSLg adds about 24 ms of latency on either GPU. Raw data beside the report.
+- A8 [upstream design documents](research/audit-design-docs.md): 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements; the open items of `07-roadmap.md`. A4b corrected along the way (frames are held back only on Linux dmabuf).
+- A5 [platform matrix](research/audit-platform-matrix.md): Windows and macOS type-check from Linux except `anti-webui-code` and `anti-webui-markdown`; `aarch64-apple-darwin` added to `rust-toolchain.toml`.
+- A7 [baseline quality](research/audit-baseline-quality.md): rustfmt, Clippy (1,109 `float_literal_f32_fallback` warnings from `setter!`, a future hard error), `unsafe`, complexity, duplication.
+- [ADR-0007](decisions/0007-upstream-design-documents-across-the-fork-lifecycle.md): `docs/design` unchanged while soft-forked, taken over at the hard fork; upstream features still adopted after it without duplication.
+- Japanese edition policy in the [documentation policy](documentation-policy.md#japanese-edition).
+- Earlier in Phase 1: A1–A4c and A6 (see the [fork README](README.md)).
+
+## Phase 1 exit criteria
+
+From the [audit plan](research/phase-1-audit-plan.md#exit-criteria):
+
+| Criterion | State |
+|---|---|
+| Every workstream file exists, follows the template, and labels every claim | Done: A1–A8 in `research/`, A9 in `performance/` |
+| Every checklist item has a status and evidence | Done: the checklists in A4a, A4b, and A4c |
+| Baseline violations (A7) and measurements (A9) are recorded with commands | Done |
+| The handoff names the Phase 2 starting point | Done: below |
+| The maintainer approves moving to Phase 2 | Waiting |
+
+## Phase 2 starting point
+
+Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-engineering)). Start with the [gap analysis](templates/gap-analysis.md), filled from the "Inputs for gap analysis" section of each audit; the A8 [open items of `07-roadmap.md`](research/audit-design-docs.md#open-items-in-07-roadmapmd) are the first candidates. Then competitor research, grilling sessions, and the project constitution. Carry in:
+
+- The verification steps from Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity; use the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks go to the Phase 4 spikes.
+- "Officially supported platforms" from the [decision log](decisions/README.md#decisions-awaiting-confirmation), due in Phase 2.
+- A true idle measurement needs an example that asks for nothing ([A9](performance/2026-11-26-upstream-baseline.md#windowed-wslg-llvmpipe-and-the-igpu)).
 
 ## Remaining work
 
-1. The maintainer runs `benchmarks/phase1/windowed.py` from a desktop terminal (commands in the [A9 report](performance/2026-11-26-upstream-baseline.md#pending-windowed-measurements)); add the results to the report.
-2. Phase 1 exit: name the Phase 2 starting point here, and ask the maintainer to approve moving to Phase 2 ([exit criteria](research/phase-1-audit-plan.md#exit-criteria)).
-3. Open the pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants the audits reviewed.
-
-## Modified files
-
-- `docs/fork/research/audit-baseline-quality.md`, `audit-platform-matrix.md`, `audit-design-docs.md` (new); `audit-capabilities-rendering.md`
-- `docs/fork/README.md`
-- `rust-toolchain.toml`, `docs/fork/quality/tool-adoption-matrix.md`
-- `docs/fork/handoff.md`
+1. The maintainer approves Phase 2, or names what Phase 1 still needs.
+2. Open the audit pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` when the maintainer wants it reviewed.
 
 ## Verification
 
 | Command | Result |
 |---|---|
-| `cargo clippy --workspace --all-targets --locked` | 0 errors, 1,159 warnings (A7 baseline) |
-| `cargo clippy … --target x86_64-pc-windows-msvc` (windows, video, wgpu) | Builds in 44 s; the Windows target is installed, so A5 can cross-check Windows here |
 | `mise run check` | passes |
+| `benchmarks/phase1/windowed.py --runs 5`, default and `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl` | 15 of 15 runs each, by the maintainer on WSLg |
 
 ## Unresolved issues
 
-- The handoff of A6 recorded `RUSTC_WRAPPER=""` in the agent sandbox; in the A7–A8 session it was `kache`, and cc-rs also ran C compiles through it (`kache cc`). Check `env | rg RUSTC_WRAPPER` before relying on either. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
+- The A6 handoff recorded `RUSTC_WRAPPER=""` in the agent sandbox; in the A7–A9 session it was `kache`, and cc-rs ran C compiles through it. Check `env | rg RUSTC_WRAPPER` before relying on either. Keep `debug = "line-tables-only"`, and delete `target/llvm-cov-target` after coverage runs.
 - `/home/airacometes/projects/.a6-mutants` (cargo-mutants output) is outside the repository; the agent cannot delete it.
-- The `setter!` f32 fix is not proposed upstream (maintainer, 2026-11-26); the fork's style API handles it ([A7](research/audit-baseline-quality.md#the-f32-literal-fallback)).
-- Carry to Phase 2: the verification steps in Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity. Also using the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks (Kani `cover!`, reachability checks for Quint or Stateright, bounded results labelled with their bound) go to the Phase 4 spikes.
-- Real macOS and Windows devices for A5 and A9: availability unknown.
+- WSLg can fall into a loop where Weston crashes every 1 min 43 s with a 0×0 RDP monitor; `wsl --shutdown` with the Windows session unlocked fixes it ([A9](performance/2026-11-26-upstream-baseline.md#wslg-failure-seen-during-the-run)).
+- Attachments the maintainer pastes into T3 Code are stored under `~/.t3/userdata/attachments/`, which the safety hook does not let the agent read; ask for the file in the repository instead.
+- Real macOS and Windows devices: no native Linux machine; Windows is this machine's host; a Mac's availability is unknown.
 - Open questions from Phase 0 still stand ([plan](quality/ci-and-quality-services.md), [decision log](decisions/README.md#decisions-awaiting-confirmation)).
 
 ## Relevant documents
 
 - [Roadmap](roadmap.md)
 - [Phase 1 audit plan](research/phase-1-audit-plan.md)
-- [Technical-audit template](templates/technical-audit.md)
+- [Gap-analysis template](templates/gap-analysis.md)
 - [Test oracle and model-checking evaluation](research/candidate-test-oracles-and-model-checking.md)
 
 ## Recommended next action
 
-With the windowed results in, check the [Phase 1 exit criteria](research/phase-1-audit-plan.md#exit-criteria), write the Phase 2 starting point here, and open the audit pull request with `gh pr create --repo AiraCometes/AntiWebUI --base main` once the maintainer wants it reviewed.
+Ask the maintainer to approve Phase 2. Once approved, start the gap analysis as described in [Phase 2 starting point](#phase-2-starting-point).
