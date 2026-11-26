@@ -1,7 +1,7 @@
 # Handoff
 
 - Updated: 2026-11-27
-- Current phase: Phase 1 closed by the maintainer on 2026-11-27; its pull request is open. Phase 2 is next
+- Current phase: Phase 1 closed by the maintainer on 2026-11-27; its pull request is [#6](https://github.com/AiraCometes/AntiWebUI/pull/6). Phase 2 is next
 - Active change: none
 - Branch and commit: `phase-1-audits`, pushed to `origin` (the A9 windowed results are the last commit)
 - Agent: Claude Code, Claude Opus 5.5
@@ -39,7 +39,7 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 
 ## Remaining work
 
-1. Review and merge the Phase 1 pull request.
+1. Review and merge the Phase 1 pull request, [#6](https://github.com/AiraCometes/AntiWebUI/pull/6).
 2. Decide where the design literature phase goes in the [roadmap](roadmap.md#planned-design-literature-review).
 3. Start Phase 2 as described in [Phase 2 starting point](#phase-2-starting-point).
 
