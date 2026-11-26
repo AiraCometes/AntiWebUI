@@ -8,7 +8,7 @@
 
 ## Completed in this session
 
-- Phase 1 closed (maintainer, 2026-11-27). A design literature phase is planned, its position open ([roadmap](roadmap.md#planned-design-literature-review)).
+- Phase 1 closed (maintainer, 2026-11-27). Phase 2 starts with a design literature review, whose findings feed the gap analysis ([roadmap](roadmap.md#phase-2-requirements-engineering)).
 - A9 [upstream baseline](performance/2026-11-26-upstream-baseline.md): builds (cold dev 58 s, cold release 149 s at `jobs = 4`), binary size (`showcase` 21.0 MB stripped), headless frame cost on llvmpipe, and windowed runs on WSLg with llvmpipe and with the Iris Xe iGPU through `GALLIUM_DRIVER=d3d12 WGPU_BACKEND=gl`. WSLg adds about 24 ms of latency on either GPU. Raw data beside the report.
 - A8 [upstream design documents](research/audit-design-docs.md): 14 of 43 documents match the code, 28 mostly match, 1 is partly stale; 23 new stale statements; the open items of `07-roadmap.md`. A4b corrected along the way (frames are held back only on Linux dmabuf).
 - A5 [platform matrix](research/audit-platform-matrix.md): Windows and macOS type-check from Linux except `anti-webui-code` and `anti-webui-markdown`; `aarch64-apple-darwin` added to `rust-toolchain.toml`.
@@ -31,7 +31,7 @@ From the [audit plan](research/phase-1-audit-plan.md#exit-criteria):
 
 ## Phase 2 starting point
 
-Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-engineering)). Start with the [gap analysis](templates/gap-analysis.md), filled from the "Inputs for gap analysis" section of each audit; the A8 [open items of `07-roadmap.md`](research/audit-design-docs.md#open-items-in-07-roadmapmd) are the first candidates. Then competitor research, grilling sessions, and the project constitution. Carry in:
+Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-engineering)). Start with the design literature review: choose textbook-grade documents and websites on UI framework design, analyse them, and record what applies (features to add, directions, capabilities beyond upstream). Then the [gap analysis](templates/gap-analysis.md), filled from that review and from the "Inputs for gap analysis" section of each audit; the A8 [open items of `07-roadmap.md`](research/audit-design-docs.md#open-items-in-07-roadmapmd) are the first candidates. Then competitor research, grilling sessions, and the project constitution. Carry in:
 
 - The verification steps from Kuniwak's "バイブ形式手法のハマりどころ2選" (<https://blog.kuniwak.com/entry/vibe-fm>): state the oracle at the start of each change, before specs, design, and tests; check it with examples, counterexample search, and mutation testing; check model fidelity; use the grilling skill to settle which failures matter before the oracle is written. Decide these with the constitution and the OpenSpec change workflow; the tool-level checks go to the Phase 4 spikes.
 - "Officially supported platforms" from the [decision log](decisions/README.md#decisions-awaiting-confirmation), due in Phase 2.
@@ -40,8 +40,7 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 ## Remaining work
 
 1. Review and merge the Phase 1 pull request, [#6](https://github.com/AiraCometes/AntiWebUI/pull/6).
-2. Decide where the design literature phase goes in the [roadmap](roadmap.md#planned-design-literature-review).
-3. Start Phase 2 as described in [Phase 2 starting point](#phase-2-starting-point).
+2. Start Phase 2 as described in [Phase 2 starting point](#phase-2-starting-point).
 
 ## Verification
 
@@ -67,4 +66,4 @@ Phase 2 is requirements engineering ([roadmap](roadmap.md#phase-2-requirements-e
 
 ## Recommended next action
 
-After the Phase 1 pull request is merged, start the gap analysis as described in [Phase 2 starting point](#phase-2-starting-point).
+After the Phase 1 pull request is merged, start the design literature review as described in [Phase 2 starting point](#phase-2-starting-point).
